@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import os
+from algorithms.utils import load_graph_data
 
 def visualize_metro_network():
     """Visualiser le graphe du réseau métro (non orienté)"""
     print("Chargement du réseau métro...")
-    data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
-    graph_data = np.load(os.path.join(data_dir, 'metro_network.npy'))
-    
+    graph_data = load_graph_data('metro_network.npy')
+
     # Créer un graphe non orienté
     G = nx.Graph()
     

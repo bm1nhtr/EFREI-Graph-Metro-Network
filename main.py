@@ -7,14 +7,20 @@ Point d'entrée principal du projet
 
 import sys
 import os
+import numpy as np
 
-# Ajouter le dossier algorithms au path
-algorithms_path = os.path.join(os.path.dirname(__file__), 'algorithms')
-sys.path.insert(0, algorithms_path)
+from algorithms.utils import load_graph_data
 
-# Import des modules
-import graph_network
-import visualize_metro
+# Ajouter le dossier parent au path pour permettre les imports relatifs
+project_root = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, project_root)
+
+# Import des modules depuis le package algorithms
+from algorithms import graph_network, visualize_metro
+from algorithms.bfs import BFS
+
+START_NODE = 20  # Noeud de départ pour TOUS les ALGOS
+
 
 def main():
     """Fonction principale"""
@@ -24,9 +30,13 @@ def main():
     print("\nChoisissez une option :")
     print("1. Generer le graphe (si pas encore fait)")
     print("2. Visualiser le reseau metro")
-    print("3. Quitter")
+    print("3. BFS sur le reseau metro")
+    print("0. Quitter")
+
+    # Charger les données du graphe depuis un fichier numpy
+    graph_data = load_graph_data('metro_network.npy') # <class 'numpy.ndarray'>   
     
-    choice = input("\nVotre choix (1-3): ").strip()
+    choice = input("\nVotre choix (0-3): ").strip()
     
     if choice == "1":
         print("\nGeneration du graphe...")
@@ -39,6 +49,7 @@ def main():
         else:
             print("Generation en cours...")
             # Re-executer le script de generation
+            algorithms_path = os.path.join(project_root, 'algorithms')
             exec(open(os.path.join(algorithms_path, 'graph_network.py')).read())
             print("Graphe genere avec succes!")
     
@@ -48,6 +59,23 @@ def main():
         print("\nVisualisation sauvegardee dans results/metro_network_visualization.png")
     
     elif choice == "3":
+        bfs = BFS(graph_data)
+        print("\nExecution de l'algorithme BFS sur le reseau metro...")
+        print(f'[Verification] Le graphe a {bfs.graph_data.shape[0]} connexions et {bfs.graph_data.shape[1]} colonnes') # (bfs.graph_data.shape)  
+        parcours = bfs.parcourir_bfs(start_node= START_NODE)
+        print("\nOrdre des stations visitees par BFS a partir de la station 0   :")
+        print(len(parcours), "stations visitees.")
+        print(parcours)
+        bfs.sauvegarder_resultats(parcours, file_name='bfs_result.txt')
+        print("\nResultats BFS sauvegardes dans results/bfs_result.txt")
+        bfs.visualiser_parcours(parcours, start_node=START_NODE, file_name='bfs_visualization.png')
+        print("Visualisation du parcours BFS sauvegardee dans results/bfs_visualization.png")
+        bfs.visualiser_arbre_bfs(parcours, start_node=START_NODE, file_name='bfs_tree_visualization.png')
+        print("Visualisation de l'arbre BFS sauvegardee dans results/bfs_tree_visualization.png")
+
+        sys.exit(0)
+    
+    elif choice == "0":
         print("\nAu revoir!")
         sys.exit(0)
     
