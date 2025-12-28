@@ -16,8 +16,7 @@ ENV/
 *.swp
 *.swo
 
-# Results (images can be regenerated)
-results/*.png
+
 
 # OS
 .DS_Store
