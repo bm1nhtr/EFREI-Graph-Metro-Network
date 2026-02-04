@@ -1,5 +1,4 @@
-from algorithms.utils import load_graph_data
-from algorithms.utils import standardize_path
+from algorithms.utils import load_graph_data, standardize_path, LAYOUT_METRO, LAYOUT_METRO_GUI, LAYOUT_ARBRE, LAYOUT_ARBRE_GUI
 import os
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -19,9 +18,10 @@ class BFS:
                     set: Ensemble des voisins du nœud.
             """
             neighbors = set()
+            node = int(node)
             # Parcourir les arêtes pour trouver les voisins
             for edge in self.graph_data:
-                source, target, _ = edge
+                source, target, _ = int(edge[0]), int(edge[1]), edge[2]
                 # Si le nœud est la source, ajouter la cible comme voisin
                 if source == node:
                     neighbors.add(target)
@@ -38,6 +38,7 @@ class BFS:
         Returns:
             list: Liste des nœuds visités dans l'ordre de la visite BFS.
         """
+        start_node = int(start_node)
         visited = set()
         queue = [start_node]
         result = []
@@ -47,7 +48,7 @@ class BFS:
             node = queue.pop(0)
             if node not in visited:
                 visited.add(node)
-                result.append(node)
+                result.append(int(node))
                 neighbors = self.get_neighbors(node)
                 # Ajouter les voisins non visités à la file d'attente
                 queue.extend(neighbors - visited)
@@ -61,7 +62,7 @@ class BFS:
             parcours (list): Liste des nœuds visités dans l'ordre de la visite BFS.
             file_name (str): Nom du fichier pour sauvegarder les résultats.
         """
-        results_dir = os.path.join(os.path.dirname(__file__), '..', 'results')
+        results_dir = os.path.join(os.path.dirname(__file__), '..', 'results', 'BFS')
         os.makedirs(results_dir, exist_ok=True)
         output_path = standardize_path(os.path.join(results_dir, file_name))
         
@@ -109,29 +110,22 @@ class BFS:
         
         return bfs_tree_edges
     
-    def visualiser_parcours(self, parcours, start_node, file_name='bfs_visualization.png'):
+    def visualiser_parcours(self, parcours, start_node, file_name='bfs_visualization.png', fig=None):
         """Visualiser le parcours BFS sur le graphe du réseau métro.
-        Utilise la visualisation générale comme base et dessine par-dessus.
-        
-        Args:
-            parcours (list): Liste des nœuds visités dans l'ordre de la visite BFS.
-            start_node (int): Nœud de départ du parcours BFS.
-            file_name (str): Nom du fichier pour sauvegarder la visualisation.
-        """
-        # Importer la fonction de visualisation générale
+        Si fig est fourni (GUI), dessine dessus et ne sauvegarde pas."""
         from algorithms.visualize_metro import load_graph_data
-        
-        # Créer un graphe non orienté (même code que visualize_metro)
+        interactive = fig is not None
+        if not interactive:
+            fig, ax = plt.subplots(figsize=(16, 12))
+        else:
+            fig.clear()
+            ax = fig.add_subplot(111)
+
         G = nx.Graph()
         for edge in self.graph_data:
             source, target, weight = edge
             G.add_edge(source, target, weight=weight)
-        
-        # Utiliser la même disposition que la visualisation générale
         pos = nx.spring_layout(G, k=2, iterations=50, seed=42)
-        
-        # Créer la figure
-        fig, ax = plt.subplots(figsize=(16, 12))
         
         # D'abord, dessiner le graphe de base (comme visualize_metro)
         # Dessiner tous les nœuds en gris clair
@@ -154,6 +148,15 @@ class BFS:
             nx.draw_networkx_edges(G, pos, edgelist=list(bfs_tree_edges), 
                                   edge_color='blue', width=5, alpha=0.9, ax=ax)
         
+        # Poids sur les arêtes (pour vérification manuelle) — répartis pour limiter les chevauchements
+        edge_list = list(G.edges())
+        edge_labels = {(u, v): str(G[u][v]["weight"]) for u, v in edge_list}
+        for edges_sub, label_pos in [(edge_list[0::3], 0.25), (edge_list[1::3], 0.5), (edge_list[2::3], 0.75)]:
+            sub_labels = {e: edge_labels[e] for e in edges_sub if e in edge_labels}
+            if sub_labels:
+                nx.draw_networkx_edge_labels(G, pos, sub_labels, font_size=10, label_pos=label_pos, ax=ax,
+                                             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85))
+        
         # Créer un dictionnaire pour l'ordre de visite (pour les couleurs)
         visit_order = {node: idx for idx, node in enumerate(parcours)}
         
@@ -174,19 +177,14 @@ class BFS:
                               node_size=visited_sizes, 
                               alpha=0.9, ax=ax, edgecolors='black', linewidths=2)
         
-        # Mettre en évidence le nœud de départ
-        nx.draw_networkx_nodes(G, pos, nodelist=[start_node], 
-                              node_color='green', node_size=800, 
-                              alpha=1.0, ax=ax, edgecolors='darkgreen', linewidths=4)
-        
+        # Mettre en évidence le nœud de départ (rouge pour contraster avec les bleus/verts)
+        nx.draw_networkx_nodes(G, pos, nodelist=[start_node],
+                              node_color='red', node_size=800,
+                              alpha=1.0, ax=ax, edgecolors='darkred', linewidths=4)
+
         # Dessiner les labels pour tous les nœuds
         labels = {node: str(node) for node in G.nodes()}
         nx.draw_networkx_labels(G, pos, labels, font_size=10, ax=ax)
-        
-        # Label spécial pour le nœud de départ
-        start_label = {start_node: f'DÉPART\n{start_node}'}
-        nx.draw_networkx_labels(G, pos, start_label, font_size=12, 
-                               font_weight='bold', font_color='darkgreen', ax=ax)
         
         # Ajouter titre et informations
         title = f'Parcours BFS - Départ: Station {start_node}\n'
@@ -194,33 +192,41 @@ class BFS:
         ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
         ax.axis('off')
         
-        # Ajouter légende
+        # Ajouter légende (en GUI : à l'extérieur pour ne pas chevaucher)
         from matplotlib.patches import Patch
-        
         legend_elements = [
-            Patch(facecolor='green', label=f'Station de départ ({start_node})'),
+            Patch(facecolor='red', label=f'Station de départ ({start_node})'),
             Patch(facecolor='lightblue', label='Stations visitées (gradient = ordre)'),
             Patch(facecolor='lightgray', label='Stations non visitées'),
             Patch(facecolor='blue', edgecolor='blue', label='Arêtes de l\'arbre BFS'),
         ]
-        ax.legend(handles=legend_elements, loc='upper right', fontsize=10)
-        
-        # Ajouter une barre de couleur pour montrer l'ordre de visite
-        sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis, 
+        if interactive:
+            ax.legend(handles=legend_elements, loc='upper left', fontsize=10, bbox_to_anchor=(1.02, 1))
+        else:
+            ax.legend(handles=legend_elements, loc='upper right', fontsize=10)
+
+        # Barre de couleur pour l'ordre de visite
+        sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis,
                                    norm=plt.Normalize(vmin=0, vmax=len(parcours)-1))
         sm.set_array([])
-        cbar = plt.colorbar(sm, ax=ax, orientation='vertical', 
+        cbar = plt.colorbar(sm, ax=ax, orientation='vertical',
                            fraction=0.02, pad=0.04)
         cbar.set_label('Ordre de visite BFS', rotation=270, labelpad=20)
-        
-        plt.tight_layout()
-        results_dir = os.path.join(os.path.dirname(__file__), '..', 'results')
-        os.makedirs(results_dir, exist_ok=True)
-        output_path = standardize_path(os.path.join(results_dir, file_name))
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        print(f"[OK] Visualisation BFS sauvegardée dans: {output_path}")
-        plt.close()
-    
+
+        if interactive:
+            fig.subplots_adjust(**LAYOUT_METRO_GUI)
+        else:
+            fig.subplots_adjust(**LAYOUT_METRO)
+            plt.tight_layout()
+        if not interactive:
+            results_dir = os.path.join(os.path.dirname(__file__), '..', 'results', 'BFS')
+            os.makedirs(results_dir, exist_ok=True)
+            output_path = standardize_path(os.path.join(results_dir, file_name))
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            print(f"[OK] Visualisation BFS sauvegardée dans: {output_path}")
+            plt.close()
+        return fig
+
     def _calculer_niveaux_bfs(self, parcours, start_node):
         """Calculer les niveaux (profondeur) de chaque nœud dans l'arbre BFS.
         
@@ -249,9 +255,9 @@ class BFS:
         
         return levels
     
-    def visualiser_arbre_bfs(self, parcours, start_node, file_name='bfs_tree_visualization.png'):
+    def visualiser_arbre_bfs(self, parcours, start_node, file_name='bfs_tree_visualization.png', fig=None):
         """Visualiser l'arbre BFS en hiérarchie (structure arborescente).
-        Les nœuds sont organisés par niveaux qui descendent.
+        Si fig est fourni (GUI), dessine dessus et ne sauvegarde pas.
         
         Args:
             parcours (list): Liste des nœuds visités dans l'ordre de la visite BFS.
@@ -303,19 +309,35 @@ class BFS:
                 nodes_in_level = nodes_by_level[level]
                 num_nodes = len(nodes_in_level)
                 y_pos = max_level - level  # Inverser pour que la racine soit en haut
-                
                 for idx, node in enumerate(nodes_in_level):
-                    x_pos = idx - (num_nodes - 1) / 2  # Centrer les nœuds
+                    x_pos = idx - (num_nodes - 1) / 2
                     pos[node] = (x_pos, y_pos)
-        
-        # Créer la figure
-        fig, ax = plt.subplots(figsize=(18, 12))
-        
+
+        interactive = fig is not None
+        if not interactive:
+            fig, ax = plt.subplots(figsize=(18, 12))
+        else:
+            fig.clear()
+            ax = fig.add_subplot(111)
+
         # Dessiner les arêtes de l'arbre (orientées de haut en bas)
         nx.draw_networkx_edges(G_tree, pos, edge_color='blue', 
                               width=3, alpha=0.8, ax=ax, 
                               arrows=True, arrowsize=20, arrowstyle='->',
                               connectionstyle='arc3,rad=0.1')
+        
+        # Poids sur les arêtes (pour vérification manuelle) — répartis pour limiter les chevauchements
+        weight_map = {}
+        for edge in self.graph_data:
+            u, v, w = int(edge[0]), int(edge[1]), int(edge[2])
+            weight_map[(min(u, v), max(u, v))] = w
+        edge_list_tree = list(G_tree.edges())
+        edge_labels_tree = {(u, v): str(weight_map.get((min(u, v), max(u, v)), "")) for u, v in edge_list_tree}
+        for edges_sub, label_pos in [(edge_list_tree[0::3], 0.25), (edge_list_tree[1::3], 0.5), (edge_list_tree[2::3], 0.75)]:
+            sub_labels = {e: edge_labels_tree[e] for e in edges_sub if e in edge_labels_tree}
+            if sub_labels:
+                nx.draw_networkx_edge_labels(G_tree, pos, sub_labels, font_size=10, label_pos=label_pos, ax=ax,
+                                             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85))
         
         # Créer un dictionnaire pour l'ordre de visite (pour les couleurs)
         visit_order = {node: idx for idx, node in enumerate(parcours)}
@@ -338,20 +360,14 @@ class BFS:
                               node_size=node_sizes, alpha=0.9, ax=ax, 
                               edgecolors='black', linewidths=2)
         
-        # Mettre en évidence le nœud de départ (racine)
-        nx.draw_networkx_nodes(G_tree, pos, nodelist=[start_node], 
-                              node_color='green', node_size=900, 
-                              alpha=1.0, ax=ax, edgecolors='darkgreen', linewidths=4)
-        
-        # Dessiner les labels
+        # Mettre en évidence la racine (rouge pour contraster)
+        nx.draw_networkx_nodes(G_tree, pos, nodelist=[start_node],
+                              node_color='red', node_size=900,
+                              alpha=1.0, ax=ax, edgecolors='darkred', linewidths=4)
+
+        # Dessiner les labels pour tous les nœuds
         labels = {node: str(node) for node in G_tree.nodes()}
-        nx.draw_networkx_labels(G_tree, pos, labels, font_size=11, 
-                               font_weight='bold', ax=ax)
-        
-        # Label spécial pour la racine
-        start_label = {start_node: f'RACINE\n{start_node}'}
-        nx.draw_networkx_labels(G_tree, pos, start_label, font_size=13, 
-                               font_weight='bold', font_color='darkgreen', ax=ax)
+        nx.draw_networkx_labels(G_tree, pos, labels, font_size=11, font_weight='bold', ax=ax)
         
         # Ajouter des lignes de niveau (optionnel)
         for level in range(max_level + 1):
@@ -372,25 +388,34 @@ class BFS:
         from matplotlib.patches import Patch
         
         legend_elements = [
-            Patch(facecolor='green', label=f'Racine (Station {start_node})'),
+            Patch(facecolor='red', label=f'Racine (Station {start_node})'),
             Patch(facecolor='lightblue', label='Nœuds (gradient = ordre de visite)'),
             Patch(facecolor='blue', edgecolor='blue', label='Arêtes de l\'arbre (parent → enfant)'),
         ]
-        ax.legend(handles=legend_elements, loc='upper right', fontsize=10)
-        
-        # Ajouter barre de couleur
-        sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis, 
+        if interactive:
+            ax.legend(handles=legend_elements, loc='upper left', fontsize=10, bbox_to_anchor=(1.02, 1))
+        else:
+            ax.legend(handles=legend_elements, loc='lower right', fontsize=10)
+
+        # Barre de couleur
+        sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis,
                                    norm=plt.Normalize(vmin=0, vmax=len(parcours)-1))
         sm.set_array([])
-        cbar = plt.colorbar(sm, ax=ax, orientation='vertical', 
+        cbar = plt.colorbar(sm, ax=ax, orientation='vertical',
                            fraction=0.02, pad=0.04)
         cbar.set_label('Ordre de visite BFS', rotation=270, labelpad=20)
-        
-        plt.tight_layout()
-        results_dir = os.path.join(os.path.dirname(__file__), '..', 'results')
-        os.makedirs(results_dir, exist_ok=True)
-        output_path = standardize_path(os.path.join(results_dir, file_name))
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        print(f"[OK] Visualisation arbre BFS sauvegardée dans: {output_path}")
-        plt.close()
+
+        if interactive:
+            fig.subplots_adjust(**LAYOUT_ARBRE_GUI)
+        else:
+            fig.subplots_adjust(**LAYOUT_ARBRE)
+            plt.tight_layout()
+        if not interactive:
+            results_dir = os.path.join(os.path.dirname(__file__), '..', 'results', 'BFS')
+            os.makedirs(results_dir, exist_ok=True)
+            output_path = standardize_path(os.path.join(results_dir, file_name))
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            print(f"[OK] Visualisation arbre BFS sauvegardée dans: {output_path}")
+            plt.close()
+        return fig
 
