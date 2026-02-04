@@ -1,0 +1,17 @@
+{
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/node_modules",
+    ".venv",
+    "venv"
+  ],
+  "extraPaths": [
+    "."
+  ],
+  "pythonVersion": "3.7",
+  "typeCheckingMode": "basic"
+}
+
