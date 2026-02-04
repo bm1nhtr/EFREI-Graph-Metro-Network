@@ -3,6 +3,8 @@
 ## Auteurs
 Binh Minh TRAN - Marouane NOUARA
 
+**Démo en ligne (Render) :** [https://graph-metro-network.onrender.com/](https://graph-metro-network.onrender.com/)
+
 ## Description
 Ce projet implémente un algorithme de recherche du plus court chemin dans un graphe non orienté représentant un réseau de métro. Le réseau contient 19 stations (0-18) réparties sur 3 lignes avec des stations de correspondance.
 
@@ -72,6 +74,9 @@ La GUI permet d’afficher le graphe de façon dynamique (zoom, pan), de choisir
 pip install -r requirements.txt
 python interface/app.py
 ```
+
+**Version hébergée :** [https://graph-metro-network.onrender.com/](https://graph-metro-network.onrender.com/)
+
 (Le fichier `requirements.txt` inclut `flask`.)
 **Accès en local :**
 - **Sur la même machine :** http://localhost:5000  
