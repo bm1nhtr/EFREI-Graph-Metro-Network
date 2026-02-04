@@ -1,0 +1,27 @@
+# Référence pour vérification manuelle des résultats
+# ==================================================
+# Graphe métro : 19 stations (0-18), 20 arêtes, non orienté.
+# Format : station_a  station_b  poids (temps en minutes)
+# Sur chaque visualisation (.png), les poids sont affichés sur les arêtes.
+# Fichier source du graphe : ../data/metro_network.txt
+
+0 1 3
+1 2 2
+2 3 4
+3 4 3
+4 5 2
+5 6 3
+7 8 3
+8 9 2
+9 10 4
+10 11 3
+12 13 3
+13 14 2
+14 15 4
+15 16 3
+16 17 2
+17 18 3
+3 8 1
+5 10 1
+6 13 1
+4 15 1

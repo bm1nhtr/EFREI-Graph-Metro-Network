@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Réseau Métro</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 30%, #1a4d6e 60%, #0d2d4a 100%);
+      background-attachment: fixed;
+      padding: 24px;
+      color: #e8eef4;
+    }
+
+    /* Glassmorphism */
+    .glass {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    .glass strong { color: #fff; }
+
+    .page-title {
+      text-align: center;
+      margin-bottom: 24px;
+      padding: 16px 24px;
+      font-size: 1.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1000px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .panel h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .user-guide {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px dashed rgba(255,255,255,0.2);
+      margin-bottom: 4px;
+      line-height: 1.45;
+    }
+    .user-guide strong { color: rgba(255,255,255,0.9); }
+
+    .alert-missing-data {
+      max-width: 1600px;
+      margin: 0 auto 20px;
+      padding: 14px 20px;
+      font-size: 0.9rem;
+      color: #fff3cd;
+      background: rgba(255, 193, 7, 0.15);
+      border-color: rgba(255, 193, 7, 0.4);
+    }
+    .alert-missing-data code { background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; }
+
+    /* Left: Algorithmes */
+    .algo-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .algo-buttons button {
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .algo-buttons button:hover {
+      background: rgba(255,255,255,0.25);
+      transform: translateY(-1px);
+    }
+    .algo-buttons button.active {
+      background: rgba(99, 179, 237, 0.5);
+      border-color: rgba(255,255,255,0.5);
+    }
+    .start-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .start-row label { font-size: 0.9rem; opacity: 0.95; }
+    .start-row select {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 0.9rem;
+    }
+    .start-row select option { background: #1e3a5f; color: #fff; }
+    .viz-wrap {
+      min-height: 320px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .viz-wrap img { max-width: 100%; height: auto; display: block; }
+    .viz-wrap .placeholder {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.95rem;
+      padding: 24px;
+      text-align: center;
+    }
+    .algo-desc {
+      padding: 16px 20px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+    }
+    .algo-desc p { margin-bottom: 10px; }
+    .algo-desc a {
+      color: #7dd3fc;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .algo-desc a:hover { text-decoration: underline; }
+
+    /* Right: Metro + Table */
+    .metro-viz {
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(0,0,0,0.2);
+    }
+    .metro-viz img { width: 100%; height: auto; display: block; }
+    .ref-table-wrap {
+      overflow: auto;
+      max-height: 340px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .ref-table-wrap table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .ref-table-wrap th,
+    .ref-table-wrap td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .ref-table-wrap th {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+    .ref-table-wrap tr:hover td { background: rgba(255,255,255,0.06); }
+    .ref-table-wrap td:last-child { text-align: center; }
+
+    .page-footer {
+      text-align: center;
+      margin-top: 28px;
+      padding: 14px 24px;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.02em;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="page-title glass">Réseau Métro (19 stations)</h1>
+
+  {% if not graph_available %}
+  <div class="alert-missing-data glass" role="alert">
+    <strong>Données manquantes.</strong> Le fichier <code>data/metro_network.npy</code> est introuvable. Exécutez d'abord&nbsp;: <code>python algorithms/graph_network.py</code>, puis rechargez cette page.
+  </div>
+  {% endif %}
+
+  <div class="grid">
+    <!-- Colonne gauche: Algorithmes -->
+    <div class="panel glass">
+      <h2>Visualisations algorithmes</h2>
+      <p class="user-guide"><strong>Guide :</strong> Choisissez une station de départ (optionnel), puis cliquez sur un algorithme pour afficher sa visualisation dans la zone ci‑dessous.</p>
+      <div class="start-row">
+        <label for="start">Station de départ :</label>
+        <select id="start">
+          {% for i in range(n_stations) %}
+          <option value="{{ i }}" {% if i == 10 %}selected{% endif %}>{{ i }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="algo-buttons">
+        <button type="button" data-algo="bfs">BFS (parcours)</button>
+        <button type="button" data-algo="bfs_tree">BFS (arbre)</button>
+        <button type="button" data-algo="prim">Prim (MST)</button>
+        <button type="button" data-algo="bellman_ford">Bellman-Ford (PCC)</button>
+      </div>
+      <div class="viz-wrap" id="algoViz">
+        <p class="placeholder" id="algoPlaceholder">Aucune visualisation pour l'instant — sélectionnez un algorithme ci‑dessus pour l'afficher ici.</p>
+        <img id="algoImg" src="" alt="" style="display: none;">
+      </div>
+      <div class="algo-desc" id="algoDesc">
+        <p id="algoDescText">Sélectionnez un algorithme pour afficher une courte description et un lien vers Wikipédia.</p>
+        <a id="algoDescLink" href="#" target="_blank" rel="noopener" style="display: none;">En savoir plus sur Wikipédia →</a>
+      </div>
+    </div>
+
+    <!-- Colonne droite: Metro + Référence -->
+    <div class="panel glass">
+      <h2>Réseau métro</h2>
+      <div class="metro-viz">
+        <img id="metroImg" src="/api/visualize/metro?_=0" alt="Graphe métro">
+      </div>
+      <h2>Référence – Arêtes (pour vérification)</h2>
+      <div class="ref-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Station A</th>
+              <th>Station B</th>
+              <th>Poids (min)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u, v, w in reference_edges %}
+            <tr>
+              <td>{{ u }}</td>
+              <td>{{ v }}</td>
+              <td>{{ w }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const start = document.getElementById('start');
+    const algoImg = document.getElementById('algoImg');
+    const algoPlaceholder = document.getElementById('algoPlaceholder');
+    const algoDescText = document.getElementById('algoDescText');
+    const algoDescLink = document.getElementById('algoDescLink');
+    const buttons = document.querySelectorAll('.algo-buttons button');
+
+    const algoInfo = {
+      bfs: {
+        desc: 'Le parcours en largeur (BFS) explore le graphe niveau par niveau depuis une racine. Il visite d\'abord tous les voisins à distance 1, puis à distance 2, etc. Utile pour les plus courts chemins en nombre d\'arêtes.',
+        url: 'https://fr.wikipedia.org/wiki/Algorithme_de_parcours_en_largeur'
+      },
+      bfs_tree: {
+        desc: 'L\'arbre BFS est la structure obtenue en enregistrant, pour chaque nœud, l\'arête par laquelle on l\'a découvert. Il forme un arbre couvrant du graphe, avec la racine comme point de départ.',
+        url: 'https://fr.wikipedia.org/wiki/Algorithme_de_parcours_en_largeur'
+      },
+      prim: {
+        desc: 'L\'algorithme de Prim construit un arbre couvrant de poids minimum (MST) en ajoutant à chaque étape l\'arête de poids minimal qui relie un nœud déjà dans l\'arbre à un nœud hors de l\'arbre.',
+        url: 'https://fr.wikipedia.org/wiki/Algorithme_de_Prim'
+      },
+      bellman_ford: {
+        desc: 'Bellman-Ford calcule les plus courts chemins depuis une source vers tous les nœuds. Il gère les poids négatifs et détecte les cycles négatifs. Complexité O(n×m) avec n nœuds et m arêtes.',
+        url: 'https://fr.wikipedia.org/wiki/Algorithme_de_Bellman-Ford'
+      }
+    };
+
+    function getUrl(algo) {
+      const s = start.value;
+      const base = '/api/visualize/' + algo;
+      return base + '?start=' + s + '&_=' + Date.now();
+    }
+
+    function setAlgoDesc(algo) {
+      const info = algoInfo[algo];
+      if (info) {
+        algoDescText.textContent = info.desc;
+        algoDescLink.href = info.url;
+        algoDescLink.style.display = 'inline';
+      } else {
+        algoDescText.textContent = '';
+        algoDescLink.style.display = 'none';
+      }
+    }
+
+    function loadAlgo(algo) {
+      setAlgoDesc(algo);
+      algoPlaceholder.style.display = 'block';
+      algoImg.style.display = 'none';
+      algoImg.onload = function () {
+        algoPlaceholder.style.display = 'none';
+        algoImg.style.display = 'block';
+      };
+      algoImg.onerror = function () {
+        algoPlaceholder.textContent = 'Erreur de chargement.';
+        algoPlaceholder.style.display = 'block';
+      };
+      algoImg.src = getUrl(algo);
+    }
+
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        buttons.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        loadAlgo(btn.getAttribute('data-algo'));
+      });
+    });
+  </script>
+
+  <footer class="page-footer glass">
+    Binh Minh TRAN · Marouane NOUARA
+  </footer>
+</body>
+</html>
