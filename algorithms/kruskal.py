@@ -11,30 +11,36 @@ import networkx as nx
 
 class Kruskal:
     def __init__(self, graph_data):
+        # Stocke les données du graphe (arêtes + poids)
         self.graph_data = graph_data
 
     def get_edges_with_weights(self):
-        """Retourne la liste des arêtes avec poids (chaque arête une seule fois pour graphe non orienté).
-        Returns:
-            list: [(u, v, weight), ...]
-        """
+        """Retourne la liste des arêtes avec poids (sans doublons)."""
+        # Liste finale des arêtes uniques
         edges = []
+        # Ensemble pour éviter les doublons dans un graphe non orienté
         seen = set()
+
+        # Parcourir les données brutes du graphe
         for edge in self.graph_data:
             u, v, w = int(edge[0]), int(edge[1]), float(edge[2])
+            # Normaliser l’arête pour éviter (u,v) et (v,u)
             key = (min(u, v), max(u, v))
             if key not in seen:
                 seen.add(key)
                 edges.append((u, v, w))
+
         return edges
 
     # --------- UNION FIND ---------
     def find(self, parent, node):
+        # Trouve la racine d’un nœud avec compression de chemin
         if parent[node] != node:
             parent[node] = self.find(parent, parent[node])
         return parent[node]
 
     def union(self, parent, rank, x, y):
+        # Fusionne deux composantes en respectant la hauteur des arbres
         root_x = self.find(parent, x)
         root_y = self.find(parent, y)
 
@@ -50,29 +56,32 @@ class Kruskal:
     # --------- KRUSKAL ---------
     def kruskal_mst(self, start_node: int):
         """
-        Calcule un arbre couvrant de poids minimum (MST) par l'algorithme de Kruskal.
-        Args:
-            start_node (int): inutile pour Kruskal (gardé pour compatibilité)
-        Returns:
-            tuple: (mst_edges, total_weight)
-                - mst_edges: liste de (u, v, weight)
-                - total_weight: poids total du MST
+        Calcule l’arbre couvrant minimum avec l’algorithme de Kruskal.
         """
+        # Récupérer toutes les arêtes uniques du graphe
         edges = self.get_edges_with_weights()
-        edges.sort(key=lambda x: x[2])  # tri par poids
 
+        # Trier les arêtes par poids croissant
+        edges.sort(key=lambda x: x[2])
+
+        # Extraire l’ensemble des nœuds du graphe
         nodes = set()
         for u, v, _ in edges:
             nodes.add(u)
             nodes.add(v)
 
+        # Initialiser Union-Find (chaque nœud est sa propre racine)
         parent = {node: node for node in nodes}
         rank = {node: 0 for node in nodes}
 
+        # Stocker les arêtes du MST
         mst_edges = []
+        # Stocker le poids total du MST
         total_weight = 0.0
 
+        # Parcourir les arêtes dans l’ordre croissant
         for u, v, w in edges:
+            # Ajouter l’arête si elle ne crée pas de cycle
             if self.find(parent, u) != self.find(parent, v):
                 self.union(parent, rank, u, v)
                 mst_edges.append((u, v, w))
@@ -81,11 +90,13 @@ class Kruskal:
         return mst_edges, total_weight
 
     def sauvegarder_resultats(self, mst_edges, total_weight, file_name="kruskal_result.txt"):
-        """Sauvegarde les résultats du MST (arêtes et poids total)."""
+        """Sauvegarde les arêtes du MST et le poids total dans un fichier texte."""
+        # Créer le dossier de résultats s’il n’existe pas
         results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "KRUSKAL")
         os.makedirs(results_dir, exist_ok=True)
         output_path = standardize_path(os.path.join(results_dir, file_name))
 
+        # Écrire les résultats dans un fichier texte
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("# Résultats Algorithme de Kruskal - Arbre couvrant minimum (MST)\n")
             f.write(f"# Poids total du MST: {total_weight}\n")
@@ -97,6 +108,7 @@ class Kruskal:
         print(f"[OK] Résultats Kruskal sauvegardés dans: {output_path}")
 
     def visualiser_mst(self, mst_edges, total_weight, start_node, file_name="kruskal_visualization.png", fig=None):
+        
         """Visualise le MST sur le graphe du réseau métro. Si fig fourni (GUI), dessine dessus et ne sauvegarde pas."""
         interactive = fig is not None
         if not interactive:

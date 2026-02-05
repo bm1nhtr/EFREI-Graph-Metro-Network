@@ -6,33 +6,46 @@ import networkx as nx
 
 class DFS:
     def __init__(self, graph_data):
+        # Stocke les données du graphe (arêtes + poids)
         self.graph_data = graph_data
 
     def get_neighbors(self, node: int):
+        # Retourne l’ensemble des voisins d’un nœud donné
         neighbors = set()
         node = int(node)
+
+        # Parcourir toutes les arêtes pour trouver les voisins
         for edge in self.graph_data:
             source, target, _ = int(edge[0]), int(edge[1]), edge[2]
             if source == node:
                 neighbors.add(target)
             elif target == node:
                 neighbors.add(source)
+
         return neighbors
 
     def parcourir_dfs(self, start_node: int):
-        """Recherche en profondeur (DFS)."""
+        """Effectue une recherche en profondeur à partir d’un nœud de départ."""
+        # Initialiser le nœud de départ
         start_node = int(start_node)
+
+        # Ensemble des nœuds déjà visités
         visited = set()
+        # Pile pour le parcours DFS
         stack = [start_node]
+        # Ordre de visite des nœuds
         result = []
+        # Dictionnaire parent → enfant pour reconstruire l’arbre DFS
         parent = {}
 
+        # Parcours tant que la pile n’est pas vide
         while stack:
             node = stack.pop()
             if node not in visited:
                 visited.add(node)
                 result.append(node)
 
+                # Récupérer les voisins dans un ordre déterministe
                 neighbors = sorted(self.get_neighbors(node), reverse=True)
                 for neighbor in neighbors:
                     if neighbor not in visited:
@@ -42,10 +55,13 @@ class DFS:
         return result, parent
 
     def sauvegarder_resultats(self, parcours, file_name='dfs_result.txt'):
+        """Sauvegarde l’ordre de visite du DFS dans un fichier texte."""
+        # Créer le dossier de résultats s’il n’existe pas
         results_dir = os.path.join(os.path.dirname(__file__), '..', 'results', 'DFS')
         os.makedirs(results_dir, exist_ok=True)
         output_path = standardize_path(os.path.join(results_dir, file_name))
 
+        # Écrire les résultats du DFS dans un fichier texte
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write("# Résultats du parcours DFS\n")
             f.write("# Format: Liste des nœuds visités dans l'ordre\n")

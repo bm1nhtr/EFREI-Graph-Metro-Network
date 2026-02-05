@@ -138,7 +138,7 @@ class MetroGraphApp:
         start = self._get_start_node()
         dfs = DFS(self.graph_data)
         parcours, parent = dfs.parcourir_dfs(start_node=start)
-        dfs.visualiser_parcours(parcours,start_node=start,fig=self.fig)
+        dfs.visualiser_parcours(parcours,parent,start_node=start,fig=self.fig)
         self.canvas.draw()
 
     def show_dfs_tree(self):

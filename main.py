@@ -144,21 +144,14 @@ def main():
         elif choice == "8":
             dj = Dijkstra(graph_data)
             print("\nExecution de l'algorithme de Dijkstra sur le reseau metro...")
-
-            # Calcul des plus courts chemins
             distances, predecessors = dj.dijkstra(start_node=START_NODE)
-
             print(f"\nPlus courts chemins depuis la station {START_NODE}:")
             for node in sorted(distances.keys()):
                 d = distances[node]
                 print(f"  Station {node}: distance = {int(d) if d != float('inf') else 'inf'}")
-
-            # Sauvegarde des résultats
+            
             dj.sauvegarder_resultats(distances,predecessors,START_NODE,file_name="dijkstra_result.txt")
-
-            # Visualisation
             dj.visualiser_parcours(distances,predecessors,START_NODE,file_name="dijkstra_visualization.png")
-
             print("Resultats et visualisation Dijkstra sauvegardes dans results/DIJKSTRA/")
 
         elif choice == "9":

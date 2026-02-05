@@ -27,6 +27,9 @@ from algorithms.visualize_metro import visualize_metro_network
 from algorithms.bfs import BFS
 from algorithms.prim import Prim
 from algorithms.bellman_ford import BellmanFord
+from algorithms.dijkstra import Dijkstra
+from algorithms.dfs import DFS
+from algorithms.kruskal import Kruskal
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), "templates"))
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
@@ -169,6 +172,87 @@ def api_visualize_bellman_ford():
     distances, predecessors, has_neg = bf.bellman_ford(start_node=start)
     fig = Figure(figsize=(12, 9))
     bf.visualiser_parcours(distances, predecessors, start, has_neg, fig=fig)
+    buf = _fig_to_png(fig)
+    plt.close(fig)
+    return send_file(buf, mimetype="image/png")
+
+@app.route("/api/visualize/dijkstra")
+def api_visualize_dijkstra():
+    start = request.args.get("start", type=int, default=10)
+    if start is None or start < 0 or start >= N_STATIONS:
+        start = 10
+
+    data = get_graph_data()
+    if data is None:
+        return "Graphe non trouvé.", 404
+
+    dj = Dijkstra(data)
+    distances, predecessors = dj.dijkstra(start_node=start)
+
+    fig = Figure(figsize=(12, 9))
+    dj.visualiser_parcours(distances, predecessors, start, fig=fig)
+
+    buf = _fig_to_png(fig)
+    plt.close(fig)
+    return send_file(buf, mimetype="image/png")
+
+@app.route("/api/visualize/dfs")
+def api_visualize_dfs():
+    start = request.args.get("start", type=int, default=10)
+    if start is None or start < 0 or start >= N_STATIONS:
+        start = 10
+
+    data = get_graph_data()
+    if data is None:
+        return "Graphe non trouvé.", 404
+
+    dfs = DFS(data)
+    parcours, parent = dfs.parcourir_dfs(start_node=start)
+
+    fig = Figure(figsize=(12, 9))
+    dfs.visualiser_parcours(parcours, start_node=start, fig=fig)
+
+    buf = _fig_to_png(fig)
+    plt.close(fig)
+    return send_file(buf, mimetype="image/png")
+
+@app.route("/api/visualize/dfs_tree")
+def api_visualize_dfs_tree():
+    start = request.args.get("start", type=int, default=10)
+    if start is None or start < 0 or start >= N_STATIONS:
+        start = 10
+
+    data = get_graph_data()
+    if data is None:
+        return "Graphe non trouvé.", 404
+
+    dfs = DFS(data)
+    parcours, parent = dfs.parcourir_dfs(start_node=start)
+
+    fig = Figure(figsize=(14, 10))
+    dfs.visualiser_arbre_dfs(parcours, parent, start_node=start, fig=fig)
+
+    buf = _fig_to_png(fig)
+    plt.close(fig)
+    return send_file(buf, mimetype="image/png")
+
+
+@app.route("/api/visualize/kruskal")
+def api_visualize_kruskal():
+    start = request.args.get("start", type=int, default=10)
+    if start is None or start < 0 or start >= N_STATIONS:
+        start = 10
+
+    data = get_graph_data()
+    if data is None:
+        return "Graphe non trouvé.", 404
+
+    kr = Kruskal(data)
+    mst_edges, total_weight = kr.kruskal_mst(start_node=start)
+
+    fig = Figure(figsize=(12, 9))
+    kr.visualiser_mst(mst_edges, total_weight, start_node=start, fig=fig)
+
     buf = _fig_to_png(fig)
     plt.close(fig)
     return send_file(buf, mimetype="image/png")
