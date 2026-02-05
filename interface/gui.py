@@ -24,6 +24,9 @@ from algorithms.visualize_metro import visualize_metro_network
 from algorithms.bfs import BFS
 from algorithms.prim import Prim
 from algorithms.bellman_ford import BellmanFord
+from algorithms.dfs import DFS
+from algorithms.dijkstra import Dijkstra
+from algorithms.kruskal import Kruskal
 
 # 19 stations (0-18)
 N_STATIONS = 19
@@ -70,6 +73,10 @@ class MetroGraphApp:
         ttk.Button(left, text="BFS (arbre)", command=self.show_bfs_tree).pack(fill=tk.X, pady=2)
         ttk.Button(left, text="Prim (MST)", command=self.show_prim).pack(fill=tk.X, pady=2)
         ttk.Button(left, text="Bellman-Ford (PCC)", command=self.show_bellman_ford).pack(fill=tk.X, pady=2)
+        ttk.Button(left, text="DFS (parcours)", command=self.show_dfs).pack(fill=tk.X, pady=2)
+        ttk.Button(left, text="DFS (arbre)", command=self.show_dfs_tree).pack(fill=tk.X, pady=2)
+        ttk.Button(left, text="Dijkstra (PCC)", command=self.show_dijkstra).pack(fill=tk.X, pady=2)
+        ttk.Button(left, text="Kruskal (MST)", command=self.show_kruskal).pack(fill=tk.X, pady=2)
 
         ttk.Separator(left, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=15)
         ttk.Button(left, text="Quitter", command=self.root.quit).pack(fill=tk.X, pady=5)
@@ -126,6 +133,22 @@ class MetroGraphApp:
         bfs.visualiser_arbre_bfs(parcours, start_node=start, fig=self.fig)
         self.canvas.draw()
 
+    def show_dfs(self):
+        """Affiche le parcours DFS sur le graphe."""
+        start = self._get_start_node()
+        dfs = DFS(self.graph_data)
+        parcours, parent = dfs.parcourir_dfs(start_node=start)
+        dfs.visualiser_parcours(parcours,parent,start_node=start,fig=self.fig)
+        self.canvas.draw()
+
+    def show_dfs_tree(self):
+        """Affiche l'arbre DFS sur le graphe."""
+        start = self._get_start_node()
+        dfs = DFS(self.graph_data)
+        parcours, parent = dfs.parcourir_dfs(start_node=start)
+        dfs.visualiser_arbre_dfs(parcours, parent, start_node=start, fig=self.fig)
+        self.canvas.draw()
+
     def show_prim(self):
         start = self._get_start_node()
         prim = Prim(self.graph_data)
@@ -139,6 +162,25 @@ class MetroGraphApp:
         distances, predecessors, has_neg = bf.bellman_ford(start_node=start)
         bf.visualiser_parcours(distances, predecessors, start, has_neg, fig=self.fig)
         self.canvas.draw()
+
+    def show_dijkstra(self):
+        """Affiche les plus courts chemins avec Dijkstra."""
+        start = self._get_start_node()
+        dijkstra = Dijkstra(self.graph_data)
+        distances, predecessors = dijkstra.dijkstra(start_node=start)
+        dijkstra.visualiser_parcours(distances,predecessors,start_node=start,fig=self.fig )
+
+        self.canvas.draw()
+
+    def show_kruskal(self):
+        """Affiche l'arbre couvrant minimum avec Kruskal."""
+        start = self._get_start_node()
+        kr = Kruskal(self.graph_data)
+        mst_edges, total_weight = kr.kruskal_mst(start_node=start)
+        kr.visualiser_mst(mst_edges,total_weight,start_node=start, fig=self.fig)
+        self.canvas.draw()
+
+    
 
     def run(self):
         self.root.mainloop()

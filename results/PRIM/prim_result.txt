@@ -1,0 +1,23 @@
+# Résultats Algorithme de Prim - Arbre couvrant minimum (MST)
+# Poids total du MST: 42.0
+# Nombre d'arêtes: 18
+
+# Arêtes (station_u station_v poids)
+10 5 1.0
+5 4 2.0
+4 15 1.0
+10 11 3.0
+5 6 3.0
+6 13 1.0
+13 14 2.0
+4 3 3.0
+3 8 1.0
+8 9 2.0
+15 16 3.0
+16 17 2.0
+13 12 3.0
+8 7 3.0
+17 18 3.0
+3 2 4.0
+2 1 2.0
+1 0 3.0
