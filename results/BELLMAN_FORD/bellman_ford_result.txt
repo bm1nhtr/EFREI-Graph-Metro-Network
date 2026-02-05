@@ -1,0 +1,34 @@
+# Résultats Bellman-Ford - Plus courts chemins depuis la source
+# Source: Station 10
+# Cycle de poids négatif détecté: True
+
+# Explication (cas contrôlé avec 1 poids négatif, ex. arête 3-8 = -1) :
+# - Un cycle négatif (ex. 3→8→3) permet de diminuer la "distance" à l'infini.
+# - Les PCC n'existent pas : on ne reconstruit donc pas les chemins.
+# - Les valeurs "Distance" ci-dessous sont des artefacts des relaxations (elles
+#   deviennent très négatives car l'algo utilise le cycle à chaque itération).
+#   En théorie, les vrais plus courts chemins seraient -infini pour les nœuds
+#   atteignables depuis le cycle.
+
+# Noeud	Distance	Predecesseur(s)
+0	-12	1
+1	-17	2
+2	-21	3
+3	-27	8
+4	-22	3
+5	-20	4
+6	-17	5
+7	-21	8
+8	-26	3
+9	-22	8
+10	-19	5
+11	-15	10
+12	-11	13
+13	-16	6
+14	-15	15
+15	-21	4
+16	-16	15
+17	-14	16
+18	-11	17
+
+# Chemins non reconstruits (cycle de poids négatif détecté).

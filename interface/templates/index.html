@@ -106,6 +106,14 @@
       background: rgba(99, 179, 237, 0.5);
       border-color: rgba(255,255,255,0.5);
     }
+    .algo-buttons .algo-sep {
+      display: inline-block;
+      width: 1px;
+      height: 28px;
+      margin: 0 6px;
+      background: rgba(255,255,255,0.25);
+      vertical-align: middle;
+    }
     .start-row {
       display: flex;
       align-items: center;
@@ -222,10 +230,19 @@
         </select>
       </div>
       <div class="algo-buttons">
+        <!-- PCC -->
+        <button type="button" data-algo="bellman_ford">Bellman-Ford (PCC)</button>
+        <button type="button" data-algo="dijkstra">Dijkstra (PCC)</button>
+        <span class="algo-sep" aria-hidden="true"></span>
+        <!-- MST -->
+        <button type="button" data-algo="prim">Prim (MST)</button>
+        <button type="button" data-algo="kruskal">Kruskal (MST)</button>
+        <span class="algo-sep" aria-hidden="true"></span>
+        <!-- BFS / DFS -->
         <button type="button" data-algo="bfs">BFS (parcours)</button>
         <button type="button" data-algo="bfs_tree">BFS (arbre)</button>
-        <button type="button" data-algo="prim">Prim (MST)</button>
-        <button type="button" data-algo="bellman_ford">Bellman-Ford (PCC)</button>
+        <button type="button" data-algo="dfs">DFS (parcours)</button>
+        <button type="button" data-algo="dfs_tree">DFS (arbre)</button>
       </div>
       <div class="viz-wrap" id="algoViz">
         <p class="placeholder" id="algoPlaceholder">Aucune visualisation pour l'instant — sélectionnez un algorithme ci‑dessus pour l'afficher ici.</p>
@@ -240,6 +257,13 @@
     <!-- Colonne droite: Metro + Référence -->
     <div class="panel glass">
       <h2>Réseau métro</h2>
+      {% if graph_bellman_available %}
+      <p class="user-guide" style="margin-bottom: 8px;">
+        <strong>Graphe à droite :</strong>
+        <label><input type="radio" name="metroGraph" value="normal" checked> Normal</label>
+        <label><input type="radio" name="metroGraph" value="bellman"> Poids négatif (Bellman, option A)</label>
+      </p>
+      {% endif %}
       <div class="metro-viz">
         <img id="metroImg" src="/api/visualize/metro?_=0" alt="Graphe métro">
       </div>
@@ -273,7 +297,10 @@
     const algoPlaceholder = document.getElementById('algoPlaceholder');
     const algoDescText = document.getElementById('algoDescText');
     const algoDescLink = document.getElementById('algoDescLink');
+    const metroImg = document.getElementById('metroImg');
     const buttons = document.querySelectorAll('.algo-buttons button');
+    const metroGraphRadios = document.querySelectorAll('input[name="metroGraph"]');
+    const graphBellmanAvailable = {{ 'true' if graph_bellman_available else 'false' }};
 
     const algoInfo = {
       bfs: {
@@ -291,7 +318,24 @@
       bellman_ford: {
         desc: 'Bellman-Ford calcule les plus courts chemins depuis une source vers tous les nœuds. Il gère les poids négatifs et détecte les cycles négatifs. Complexité O(n×m) avec n nœuds et m arêtes.',
         url: 'https://fr.wikipedia.org/wiki/Algorithme_de_Bellman-Ford'
+      },
+      dijkstra: {
+        desc: "L’algorithme de Dijkstra calcule les plus courts chemins depuis une source dans un graphe pondéré sans poids négatifs. Il est plus rapide que Bellman-Ford quand tous les poids sont positifs.",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_Dijkstra"
+      },
+      dfs: {
+        desc: "Le parcours en profondeur (DFS) explore un graphe en allant le plus loin possible le long d’une branche avant de revenir en arrière. Il est utile pour l’exploration et la détection de structures.",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_parcours_en_profondeur"
+      },
+      dfs_tree: {
+        desc: "L’arbre DFS est formé par les arêtes utilisées lors du parcours en profondeur. Il montre la structure hiérarchique de l’exploration du graphe.",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_parcours_en_profondeur"
+      },
+      kruskal: {
+        desc: "L’algorithme de Kruskal construit un arbre couvrant de poids minimum (MST) en ajoutant les arêtes par poids croissant sans créer de cycle.",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_Kruskal"
       }
+
     };
 
     function getUrl(algo) {
@@ -312,6 +356,16 @@
       }
     }
 
+    function getMetroImgUrl() {
+      if (!graphBellmanAvailable || !metroGraphRadios.length) return '/api/visualize/metro?_=' + Date.now();
+      const bellman = document.querySelector('input[name="metroGraph"]:checked').value === 'bellman';
+      return (bellman ? '/api/visualize/metro_bellman?' : '/api/visualize/metro?') + '_=' + Date.now();
+    }
+
+    function refreshMetroImg() {
+      if (metroImg) metroImg.src = getMetroImgUrl();
+    }
+
     function loadAlgo(algo) {
       setAlgoDesc(algo);
       algoPlaceholder.style.display = 'block';
@@ -325,6 +379,10 @@
         algoPlaceholder.style.display = 'block';
       };
       algoImg.src = getUrl(algo);
+      if (graphBellmanAvailable && algo === 'bellman_ford') {
+        const bellmanRadio = document.querySelector('input[name="metroGraph"][value="bellman"]');
+        if (bellmanRadio) { bellmanRadio.checked = true; refreshMetroImg(); }
+      }
     }
 
     buttons.forEach(function (btn) {
@@ -334,6 +392,12 @@
         loadAlgo(btn.getAttribute('data-algo'));
       });
     });
+
+    if (metroGraphRadios.length) {
+      metroGraphRadios.forEach(function (r) {
+        r.addEventListener('change', refreshMetroImg);
+      });
+    }
   </script>
 
   <footer class="page-footer glass">

@@ -1,1 +1,3 @@
-# Interface package: web (Flask) and desktop (Tkinter) UIs
+"""
+Interface utilisateur : application web (Flask) et interface desktop (Tkinter).
+"""

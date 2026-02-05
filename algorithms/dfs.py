@@ -1,3 +1,5 @@
+"""DFS (parcours en profondeur) sur le graphe reseau metro."""
+
 import os
 
 import matplotlib.pyplot as plt
@@ -12,119 +14,94 @@ from algorithms.utils import (
 )
 
 
-class BFS:
-    """Parcours en largeur (BFS) sur le graphe du réseau métro."""
+class DFS:
+    """Parcours en profondeur (DFS) sur le graphe du réseau métro."""
 
     def __init__(self, graph_data):
         """Initialise avec les données du graphe (tableau d'arêtes [u, v, poids])."""
         self.graph_data = graph_data
 
     def get_neighbors(self, node: int):
-        """Retourne les voisins d'un nœud.
-        Args:
-            node (int): Nœud dont on veut trouver les voisins.
-
-        Returns:
-                set: Ensemble des voisins du nœud.
-        """
+        # Retourne l’ensemble des voisins d’un nœud donné
         neighbors = set()
         node = int(node)
-        # Parcourir les arêtes pour trouver les voisins
+
+        # Parcourir toutes les arêtes pour trouver les voisins
         for edge in self.graph_data:
             source, target, _ = int(edge[0]), int(edge[1]), edge[2]
-            # Si le nœud est la source, ajouter la cible comme voisin
             if source == node:
                 neighbors.add(target)
-            # Si le nœud est la cible, ajouter la source comme voisin
             elif target == node:
                 neighbors.add(source)
+
         return neighbors
 
-    def parcourir_bfs(self, start_node: int):
-        """
-        Effectuer une recherche en largeur (BFS) à partir d'un nœud de départ donné.
-        Args:
-            start_node (int): Le nœud de départ pour la recherche BFS.
-        Returns:
-            list: Liste des nœuds visités dans l'ordre de la visite BFS.
-        """
+    def parcourir_dfs(self, start_node: int):
+        """Effectue une recherche en profondeur à partir d’un nœud de départ."""
+        # Initialiser le nœud de départ
         start_node = int(start_node)
-        visited = set()
-        queue = [start_node]
-        result = []
 
-        while queue:
-            # Extraire le premier nœud de la file d'attente
-            node = queue.pop(0)
+        # Ensemble des nœuds déjà visités
+        visited = set()
+        # Pile pour le parcours DFS
+        stack = [start_node]
+        # Ordre de visite des nœuds
+        result = []
+        # Dictionnaire parent → enfant pour reconstruire l’arbre DFS
+        parent = {}
+
+        # Parcours tant que la pile n’est pas vide
+        while stack:
+            node = stack.pop()
             if node not in visited:
                 visited.add(node)
-                result.append(int(node))
-                neighbors = self.get_neighbors(node)
-                # Ajouter les voisins non visités à la file d'attente
-                queue.extend(neighbors - visited)
+                result.append(node)
 
-        return result
+                # Récupérer les voisins dans un ordre déterministe
+                neighbors = sorted(self.get_neighbors(node), reverse=True)
+                for neighbor in neighbors:
+                    if neighbor not in visited:
+                        parent[neighbor] = node
+                        stack.append(neighbor)
 
-    def sauvegarder_resultats(self, parcours, file_name="bfs_result.txt"):
-        """Sauvegarder les résultats du parcours BFS dans un fichier texte.
+        return result, parent
 
-        Args:
-            parcours (list): Liste des nœuds visités dans l'ordre de la visite BFS.
-            file_name (str): Nom du fichier pour sauvegarder les résultats.
-        """
-        results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "BFS")
+    def sauvegarder_resultats(self, parcours, file_name="dfs_result.txt"):
+        """Sauvegarde l’ordre de visite du DFS dans un fichier texte."""
+        # Créer le dossier de résultats s’il n’existe pas
+        results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "DFS")
         os.makedirs(results_dir, exist_ok=True)
         output_path = standardize_path(os.path.join(results_dir, file_name))
 
-        # Sauvegarder les résultats dans un fichier texte
+        # Écrire les résultats du DFS dans un fichier texte
         with open(output_path, "w", encoding="utf-8") as f:
-            f.write("# Résultats du parcours BFS\n")
+            f.write("# Résultats du parcours DFS\n")
             f.write("# Format: Liste des nœuds visités dans l'ordre\n")
             f.write(f"# Nombre de nœuds visités: {len(parcours)}\n\n")
             f.write(" -> ".join(map(str, parcours)))
             f.write("\n")
 
-        print(f"[OK] Résultats sauvegardés dans: {output_path}")
-
-    def _reconstruire_arbre_bfs(self, start_node):
-        """Reconstruire l'arbre BFS pour trouver les vraies arêtes utilisées.
-
-        Args:
-            parcours (list): Liste des nœuds visités dans l'ordre.
-            start_node (int): Nœud de départ.
-
-        Returns:
-            set: Ensemble des arêtes (tuples) utilisées dans l'arbre BFS.
-        """
-        bfs_tree_edges = set()
-        visited = set()
-        queue = [start_node]
-        parent = {}  # parent[node] = nœud parent dans l'arbre BFS
-
-        # Parcourir le graphe pour reconstruire l'arbre BFS
-        while queue:
-            node = queue.pop(0)
-            if node not in visited:
-                visited.add(node)
-                if node != start_node:
-                    # Ajouter l'arête vers le parent
-                    bfs_tree_edges.add((parent[node], node))
-                    bfs_tree_edges.add((node, parent[node]))  # Non orienté
-
-                # Ajouter les voisins non visités à la file d'attente
-                neighbors = self.get_neighbors(node)
-                for neighbor in neighbors:
-                    if neighbor not in visited and neighbor not in queue:
-                        parent[neighbor] = node
-                        queue.append(neighbor)
-
-        return bfs_tree_edges
+        print(f"[OK] Résultats DFS sauvegardés dans: {output_path}")
 
     def visualiser_parcours(
-        self, parcours, start_node, file_name="bfs_visualization.png", fig=None
+        self, parcours, parent, start_node, file_name="dfs_visualization.png", fig=None
     ):
-        """Visualiser le parcours BFS sur le graphe du réseau métro.
-        Si fig est fourni (GUI), dessine dessus et ne sauvegarde pas."""
+        """
+        Visualise le parcours DFS sur le graphe (couleurs par ordre de visite).
+
+        Si fig est fourni (mode GUI), dessine dessus sans sauvegarder.
+        Sinon crée une figure, sauvegarde dans results/DFS/ et ferme.
+
+        Args:
+            parcours: Liste des nœuds dans l'ordre de visite.
+            parent: Dict nœud -> parent (arbre DFS).
+            start_node: Nœud de départ.
+            file_name: Nom du fichier image si non interactif.
+            fig: Figure matplotlib optionnelle (mode GUI).
+
+        Returns:
+            Figure matplotlib (pour réutilisation en GUI).
+        """
         interactive = fig is not None
         if not interactive:
             fig, ax = plt.subplots(figsize=(16, 12))
@@ -132,33 +109,36 @@ class BFS:
             fig.clear()
             ax = fig.add_subplot(111)
 
+        # Construire le graphe NetworkX à partir des données
         G = nx.Graph()
         for edge in self.graph_data:
             source, target, weight = edge
             G.add_edge(source, target, weight=weight)
+
+        # Calculer une disposition stable des nœuds
         pos = nx.spring_layout(G, k=2, iterations=50, seed=42)
 
-        # D'abord, dessiner le graphe de base (comme visualize_metro)
-        # Dessiner tous les nœuds en gris clair
+        # Dessiner tous les nœuds du graphe en gris clair
         nx.draw_networkx_nodes(G, pos, node_color="lightgray", node_size=400, alpha=0.6, ax=ax)
 
-        # Dessiner toutes les arêtes - rendre plus visibles
+        # Dessiner toutes les arêtes avec une couleur liée au poids
         edges = G.edges()
         weights = [G[u][v]["weight"] for u, v in edges]
         edge_colors = plt.cm.Reds([w / 4.0 for w in weights])
-        # Rendre les arêtes non parcourues plus visibles
         nx.draw_networkx_edges(G, pos, edge_color=edge_colors, width=2.5, alpha=0.6, ax=ax)
 
-        # Reconstruire l'arbre BFS pour trouver les vraies arêtes utilisées
-        bfs_tree_edges = self._reconstruire_arbre_bfs(start_node)
+        # Construire les arêtes de l’arbre DFS à partir du dictionnaire parent
+        dfs_tree_edges = []
+        for child, par in parent.items():
+            dfs_tree_edges.append((par, child))
 
-        # Dessiner les arêtes de l'arbre BFS en bleu épais
-        if bfs_tree_edges:
+        # Dessiner les arêtes utilisées par le DFS en bleu épais
+        if dfs_tree_edges:
             nx.draw_networkx_edges(
-                G, pos, edgelist=list(bfs_tree_edges), edge_color="blue", width=5, alpha=0.9, ax=ax
+                G, pos, edgelist=dfs_tree_edges, edge_color="blue", width=5, alpha=0.9, ax=ax
             )
 
-        # Poids sur les arêtes (pour vérification manuelle) — répartis pour limiter les chevauchements
+        # Afficher les poids sur les arêtes en limitant les chevauchements
         edge_list = list(G.edges())
         edge_labels = {(u, v): str(G[u][v]["weight"]) for u, v in edge_list}
         for edges_sub, label_pos in [
@@ -178,34 +158,30 @@ class BFS:
                     bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85),
                 )
 
-        # Créer un dictionnaire pour l'ordre de visite (pour les couleurs)
+        # Associer chaque nœud à son ordre de visite
         visit_order = {node: idx for idx, node in enumerate(parcours)}
 
-        # Dessiner les nœuds visités avec gradient de couleur
+        # Préparer les couleurs des nœuds visités selon l’ordre DFS
         visited_nodes = []
         visited_colors = []
-        visited_sizes = []
-
         for node in parcours:
             visited_nodes.append(node)
             order_ratio = visit_order[node] / max(len(parcours) - 1, 1)
             visited_colors.append(plt.cm.viridis(order_ratio))
-            visited_sizes.append(600)
 
-        # Dessiner les nœuds visités par-dessus
+        # Dessiner les nœuds visités avec un gradient de couleur
         nx.draw_networkx_nodes(
             G,
             pos,
             nodelist=visited_nodes,
             node_color=visited_colors,
-            node_size=visited_sizes,
+            node_size=600,
             alpha=0.9,
             ax=ax,
             edgecolors="black",
-            linewidths=2,
         )
 
-        # Mettre en évidence le nœud de départ (rouge pour contraster avec les bleus/verts)
+        # Mettre en évidence le nœud de départ en rouge
         nx.draw_networkx_nodes(
             G,
             pos,
@@ -215,28 +191,32 @@ class BFS:
             alpha=1.0,
             ax=ax,
             edgecolors="darkred",
-            linewidths=4,
         )
 
-        # Dessiner les labels pour tous les nœuds
+        # Afficher les labels des nœuds
         labels = {node: str(node) for node in G.nodes()}
         nx.draw_networkx_labels(G, pos, labels, font_size=10, ax=ax)
 
-        # Ajouter titre et informations
-        title = f"Parcours BFS - Départ: Station {start_node}\n"
-        title += f"Ordre de visite: {len(parcours)} stations | Arêtes utilisées: {len(bfs_tree_edges) // 2}"
-        ax.set_title(title, fontsize=16, fontweight="bold", pad=20)
+        # Ajouter un titre descriptif
+        ax.set_title(
+            f"Parcours DFS - Départ: Station {start_node}\n"
+            f"Ordre de visite: {len(parcours)} stations | Arêtes utilisées: {len(dfs_tree_edges)}",
+            fontsize=16,
+            fontweight="bold",
+        )
         ax.axis("off")
 
-        # Ajouter légende (en GUI : à l'extérieur pour ne pas chevaucher)
+        # Créer la légende explicative
         from matplotlib.patches import Patch
 
         legend_elements = [
             Patch(facecolor="red", label=f"Station de départ ({start_node})"),
-            Patch(facecolor="lightblue", label="Stations visitées (gradient = ordre)"),
+            Patch(facecolor="lightblue", label="Stations visitées (gradient = ordre DFS)"),
             Patch(facecolor="lightgray", label="Stations non visitées"),
-            Patch(facecolor="blue", edgecolor="blue", label="Arêtes de l'arbre BFS"),
+            Patch(facecolor="blue", edgecolor="blue", label="Arêtes de l'arbre DFS"),
         ]
+
+        # Positionner la légende selon le mode
         if interactive:
             ax.legend(
                 handles=legend_elements, loc="upper left", fontsize=10, bbox_to_anchor=(1.02, 1)
@@ -244,96 +224,58 @@ class BFS:
         else:
             ax.legend(handles=legend_elements, loc="upper right", fontsize=10)
 
-        # Barre de couleur pour l'ordre de visite
+        # Ajouter une barre de couleur pour l’ordre de visite
         sm = plt.cm.ScalarMappable(
             cmap=plt.cm.viridis, norm=plt.Normalize(vmin=0, vmax=len(parcours) - 1)
         )
         sm.set_array([])
         cbar = plt.colorbar(sm, ax=ax, orientation="vertical", fraction=0.02, pad=0.04)
-        cbar.set_label("Ordre de visite BFS", rotation=270, labelpad=20)
+        cbar.set_label("Ordre de visite DFS", rotation=270, labelpad=20)
 
+        # Ajuster la mise en page
         if interactive:
             fig.subplots_adjust(**LAYOUT_METRO_GUI)
         else:
             fig.subplots_adjust(**LAYOUT_METRO)
             plt.tight_layout()
+
+        # Sauvegarder l’image si hors GUI
         if not interactive:
-            results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "BFS")
+            results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "DFS")
             os.makedirs(results_dir, exist_ok=True)
             output_path = standardize_path(os.path.join(results_dir, file_name))
             plt.savefig(output_path, dpi=300, bbox_inches="tight")
-            print(f"[OK] Visualisation BFS sauvegardée dans: {output_path}")
+            print(f"[OK] Visualisation DFS sauvegardée dans: {output_path}")
             plt.close()
+
         return fig
 
-    def _calculer_niveaux_bfs(self, parcours, start_node):
-        """Calculer les niveaux (profondeur) de chaque nœud dans l'arbre BFS.
-
-        Args:
-            parcours (list): Liste des nœuds visités dans l'ordre.
-            start_node (int): Nœud de départ.
-
-        Returns:
-            dict: Dictionnaire {node: niveau} où niveau 0 = racine
-        """
-        levels = {start_node: 0}
-        visited = set()
-        queue = [start_node]
-
-        while queue:
-            node = queue.pop(0)
-            if node not in visited:
-                visited.add(node)
-                current_level = levels[node]
-
-                neighbors = self.get_neighbors(node)
-                for neighbor in neighbors:
-                    if neighbor not in visited and neighbor not in queue:
-                        levels[neighbor] = current_level + 1
-                        queue.append(neighbor)
-
-        return levels
-
-    def visualiser_arbre_bfs(
-        self, parcours, start_node, file_name="bfs_tree_visualization.png", fig=None
+    def visualiser_arbre_dfs(
+        self, parcours, parent, start_node, file_name="dfs_tree_visualization.png", fig=None
     ):
-        """Visualiser l'arbre BFS en hiérarchie (structure arborescente).
+        """Visualiser l'arbre DFS en hiérarchie (structure arborescente).
         Si fig est fourni (GUI), dessine dessus et ne sauvegarde pas.
 
         Args:
-            parcours (list): Liste des nœuds visités dans l'ordre de la visite BFS.
-            start_node (int): Nœud de départ du parcours BFS.
+            parcours (list): Liste des nœuds visités dans l'ordre de la visite DFS.
+            parent (dict): Dictionnaire {enfant: parent} issu du DFS.
+            start_node (int): Nœud de départ du parcours DFS.
             file_name (str): Nom du fichier pour sauvegarder la visualisation.
         """
-        # Créer un graphe pour l'arbre BFS
+        # Créer un graphe pour l'arbre DFS
         G_tree = nx.DiGraph()  # Graphe orienté pour l'arbre
 
-        # Reconstruire l'arbre BFS
-        visited = set()
-        queue = [start_node]
-        parent = {}
-        bfs_tree_edges = []
+        # Construire l'arbre DFS à partir du dictionnaire parent
+        for child, par in parent.items():
+            G_tree.add_edge(par, child)
 
-        while queue:
-            node = queue.pop(0)
-            if node not in visited:
-                visited.add(node)
-                if node != start_node:
-                    # Ajouter l'arête parent -> enfant dans l'arbre
-                    G_tree.add_edge(parent[node], node)
-                    bfs_tree_edges.append((parent[node], node))
-
-                neighbors = self.get_neighbors(node)
-                for neighbor in neighbors:
-                    if neighbor not in visited and neighbor not in queue:
-                        parent[neighbor] = node
-                        queue.append(neighbor)
-
-        # Calculer les niveaux
-        levels = self._calculer_niveaux_bfs(parcours, start_node)
+        # Calculer les niveaux (profondeur) dans l'arbre DFS
+        levels = {start_node: 0}
+        for node in parcours:
+            if node in parent:
+                levels[node] = levels[parent[node]] + 1
 
         # Créer une disposition hiérarchique (arbre)
-        # Utiliser un layout en arbre avec les niveaux
         pos = {}
         max_level = max(levels.values()) if levels else 0
 
@@ -349,7 +291,7 @@ class BFS:
             if level in nodes_by_level:
                 nodes_in_level = nodes_by_level[level]
                 num_nodes = len(nodes_in_level)
-                y_pos = max_level - level  # Inverser pour que la racine soit en haut
+                y_pos = max_level - level  # Racine en haut
                 for idx, node in enumerate(nodes_in_level):
                     x_pos = idx - (num_nodes - 1) / 2
                     pos[node] = (x_pos, y_pos)
@@ -361,11 +303,11 @@ class BFS:
             fig.clear()
             ax = fig.add_subplot(111)
 
-        # Dessiner les arêtes de l'arbre (orientées de haut en bas)
+        # Dessiner les arêtes de l'arbre
         nx.draw_networkx_edges(
             G_tree,
             pos,
-            edge_color="blue",
+            edge_color="purple",
             width=3,
             alpha=0.8,
             ax=ax,
@@ -375,15 +317,17 @@ class BFS:
             connectionstyle="arc3,rad=0.1",
         )
 
-        # Poids sur les arêtes (pour vérification manuelle) — répartis pour limiter les chevauchements
+        # Poids sur les arêtes (pour vérification manuelle)
         weight_map = {}
         for edge in self.graph_data:
             u, v, w = int(edge[0]), int(edge[1]), int(edge[2])
             weight_map[(min(u, v), max(u, v))] = w
+
         edge_list_tree = list(G_tree.edges())
         edge_labels_tree = {
             (u, v): str(weight_map.get((min(u, v), max(u, v)), "")) for u, v in edge_list_tree
         }
+
         for edges_sub, label_pos in [
             (edge_list_tree[0::3], 0.25),
             (edge_list_tree[1::3], 0.5),
@@ -401,13 +345,11 @@ class BFS:
                     bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85),
                 )
 
-        # Créer un dictionnaire pour l'ordre de visite (pour les couleurs)
+        # Ordre de visite (pour les couleurs)
         visit_order = {node: idx for idx, node in enumerate(parcours)}
 
-        # Dessiner les nœuds avec gradient de couleur selon l'ordre de visite
         node_colors = []
         node_sizes = []
-
         for node in G_tree.nodes():
             if node in visit_order:
                 order_ratio = visit_order[node] / max(len(parcours) - 1, 1)
@@ -429,7 +371,7 @@ class BFS:
             linewidths=2,
         )
 
-        # Mettre en évidence la racine (rouge pour contraster)
+        # Mettre en évidence la racine
         nx.draw_networkx_nodes(
             G_tree,
             pos,
@@ -442,11 +384,11 @@ class BFS:
             linewidths=4,
         )
 
-        # Dessiner les labels pour tous les nœuds
+        # Labels
         labels = {node: str(node) for node in G_tree.nodes()}
         nx.draw_networkx_labels(G_tree, pos, labels, font_size=11, font_weight="bold", ax=ax)
 
-        # Ajouter des lignes de niveau (optionnel)
+        # Lignes de niveau
         for level in range(max_level + 1):
             y_pos = max_level - level
             ax.axhline(y=y_pos, color="gray", linestyle="--", alpha=0.3, linewidth=1)
@@ -459,20 +401,20 @@ class BFS:
                 color="gray",
             )
 
-        # Ajouter titre
-        title = f"Arbre BFS Hiérarchique - Départ: Station {start_node}\n"
+        # Titre
+        title = f"Arbre DFS Hiérarchique - Départ: Station {start_node}\n"
         title += f"Nombre de nœuds: {len(parcours)} | Profondeur: {max_level} niveaux"
         ax.set_title(title, fontsize=16, fontweight="bold", pad=20)
         ax.axis("off")
         ax.set_aspect("equal")
 
-        # Ajouter légende
+        # Légende
         from matplotlib.patches import Patch
 
         legend_elements = [
             Patch(facecolor="red", label=f"Racine (Station {start_node})"),
             Patch(facecolor="lightblue", label="Nœuds (gradient = ordre de visite)"),
-            Patch(facecolor="blue", edgecolor="blue", label="Arêtes de l'arbre (parent → enfant)"),
+            Patch(facecolor="purple", edgecolor="purple", label="Arêtes de l'arbre DFS"),
         ]
         if interactive:
             ax.legend(
@@ -487,7 +429,7 @@ class BFS:
         )
         sm.set_array([])
         cbar = plt.colorbar(sm, ax=ax, orientation="vertical", fraction=0.02, pad=0.04)
-        cbar.set_label("Ordre de visite BFS", rotation=270, labelpad=20)
+        cbar.set_label("Ordre de visite DFS", rotation=270, labelpad=20)
 
         if interactive:
             fig.subplots_adjust(**LAYOUT_ARBRE_GUI)
@@ -495,10 +437,11 @@ class BFS:
             fig.subplots_adjust(**LAYOUT_ARBRE)
             plt.tight_layout()
         if not interactive:
-            results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "BFS")
+            results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "DFS")
             os.makedirs(results_dir, exist_ok=True)
             output_path = standardize_path(os.path.join(results_dir, file_name))
             plt.savefig(output_path, dpi=300, bbox_inches="tight")
-            print(f"[OK] Visualisation arbre BFS sauvegardée dans: {output_path}")
+            print(f"[OK] Visualisation arbre DFS sauvegardée dans: {output_path}")
             plt.close()
+
         return fig

@@ -2,7 +2,6 @@
 # Format : station_a station_b temps_trajet_minutes
 # Total stations : 19 (0-18)
 # Total connexions : 20
-# Le graphe est NON ORIENTÉ - les arêtes représentent des connexions bidirectionnelles
 
 0 1 3
 1 2 2
