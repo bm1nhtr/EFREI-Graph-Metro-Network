@@ -226,6 +226,10 @@
         <button type="button" data-algo="bfs_tree">BFS (arbre)</button>
         <button type="button" data-algo="prim">Prim (MST)</button>
         <button type="button" data-algo="bellman_ford">Bellman-Ford (PCC)</button>
+        <button type="button" data-algo="dijkstra">Dijkstra (PCC)</button>
+        <button type="button" data-algo="dfs">DFS (parcours)</button>
+        <button type="button" data-algo="dfs_tree">DFS (arbre)</button>
+        <button type="button" data-algo="kruskal">Kruskal (MST)</button>
       </div>
       <div class="viz-wrap" id="algoViz">
         <p class="placeholder" id="algoPlaceholder">Aucune visualisation pour l'instant — sélectionnez un algorithme ci‑dessus pour l'afficher ici.</p>
@@ -291,7 +295,24 @@
       bellman_ford: {
         desc: 'Bellman-Ford calcule les plus courts chemins depuis une source vers tous les nœuds. Il gère les poids négatifs et détecte les cycles négatifs. Complexité O(n×m) avec n nœuds et m arêtes.',
         url: 'https://fr.wikipedia.org/wiki/Algorithme_de_Bellman-Ford'
+      },
+      dijkstra: {
+        desc: "L’algorithme de Dijkstra calcule les plus courts chemins depuis une source dans un graphe pondéré sans poids négatifs. Il est plus rapide que Bellman-Ford quand tous les poids sont positifs.",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_Dijkstra"
+      },
+      dfs: {
+        desc: "Le parcours en profondeur (DFS) explore un graphe en allant le plus loin possible le long d’une branche avant de revenir en arrière. Il est utile pour l’exploration et la détection de structures.",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_parcours_en_profondeur"
+      },
+      dfs_tree: {
+        desc: "L’arbre DFS est formé par les arêtes utilisées lors du parcours en profondeur. Il montre la structure hiérarchique de l’exploration du graphe.",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_parcours_en_profondeur"
+      },
+      kruskal: {
+        desc: "L’algorithme de Kruskal construit un arbre couvrant de poids minimum (MST) en ajoutant les arêtes par poids croissant sans créer de cycle.",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_Kruskal"
       }
+
     };
 
     function getUrl(algo) {

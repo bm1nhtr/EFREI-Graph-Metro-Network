@@ -20,6 +20,10 @@ from algorithms import graph_network, visualize_metro
 from algorithms.bfs import BFS
 from algorithms.prim import Prim
 from algorithms.bellman_ford import BellmanFord
+from algorithms.kruskal import Kruskal
+from algorithms.dfs import DFS
+from algorithms.dijkstra import Dijkstra
+
 
 START_NODE = 10  # Noeud de départ pour TOUS les ALGOS (0-18, 19 stations)
 
@@ -36,10 +40,13 @@ def main():
         print("3. BFS sur le reseau metro")
         print("4. Prim (MST - Arbre couvrant minimum)")
         print("5. Bellman-Ford (Plus courts chemins)")
-        print("6. Interface graphique (GUI desktop)")
+        print("6. Kruskal (MST - Arbre couvrant minimum)")
+        print("7. DFS sur le reseau metro")
+        print("8. Dijkstra (Plus courts chemins)")
+        print("9. Interface graphique (GUI desktop)")
         print("0. Quitter")
 
-        choice = input("\nVotre choix (0-6): ").strip()
+        choice = input("\nVotre choix (0-9): ").strip()
 
         if choice == "0":
             print("\nAu revoir!")
@@ -105,8 +112,56 @@ def main():
             bf.sauvegarder_resultats(distances, predecessors, START_NODE, has_neg, file_name='bellman_ford_result.txt')
             bf.visualiser_parcours(distances, predecessors, START_NODE, has_neg, file_name='bellman_ford_visualization.png')
             print("Resultats et visualisation Bellman-Ford sauvegardes dans results/BELLMAN_FORD/")
+    
 
         elif choice == "6":
+            kr = Kruskal(graph_data)
+            print("\nExecution de l'algorithme de Kruskal (MST) sur le reseau metro...")
+            mst_edges, total_weight = kr.kruskal_mst(start_node=START_NODE)
+            print(f"\nMST: {len(mst_edges)} aretes, poids total = {total_weight}")
+            kr.sauvegarder_resultats(mst_edges, total_weight, file_name='kruskal_result.txt')
+            kr.visualiser_mst(mst_edges, total_weight, start_node=START_NODE, file_name='kruskal_visualization.png')
+            print("Resultats et visualisation Kruskal sauvegardes dans results/KRUSKAL/")
+
+
+        elif choice == "7":
+            dfs = DFS(graph_data)
+            print("\nExecution de l'algorithme DFS sur le reseau metro...")
+            print(f'[Verification] Le graphe a {dfs.graph_data.shape[0]} connexions et {dfs.graph_data.shape[1]} colonnes')
+
+            parcours, parent = dfs.parcourir_dfs(start_node=START_NODE)
+
+            print("\nOrdre des stations visitees par DFS :")
+            print(len(parcours), "stations visitees.")
+            print(parcours)
+
+            dfs.sauvegarder_resultats(parcours, file_name='dfs_result.txt')
+            dfs.visualiser_parcours(parcours,parent, start_node=START_NODE, file_name='dfs_visualization.png')
+            dfs.visualiser_arbre_dfs(parcours, parent, start_node=START_NODE, file_name='dfs_tree_visualization.png')
+
+            print("Resultats et visualisations DFS sauvegardes dans results/DFS/")
+
+        elif choice == "8":
+            dj = Dijkstra(graph_data)
+            print("\nExecution de l'algorithme de Dijkstra sur le reseau metro...")
+
+            # Calcul des plus courts chemins
+            distances, predecessors = dj.dijkstra(start_node=START_NODE)
+
+            print(f"\nPlus courts chemins depuis la station {START_NODE}:")
+            for node in sorted(distances.keys()):
+                d = distances[node]
+                print(f"  Station {node}: distance = {int(d) if d != float('inf') else 'inf'}")
+
+            # Sauvegarde des résultats
+            dj.sauvegarder_resultats(distances,predecessors,START_NODE,file_name="dijkstra_result.txt")
+
+            # Visualisation
+            dj.visualiser_parcours(distances,predecessors,START_NODE,file_name="dijkstra_visualization.png")
+
+            print("Resultats et visualisation Dijkstra sauvegardes dans results/DIJKSTRA/")
+
+        elif choice == "9":
             from interface.gui import MetroGraphApp
             app = MetroGraphApp()
             app.run()
