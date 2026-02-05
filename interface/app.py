@@ -210,7 +210,7 @@ def api_visualize_dfs():
     parcours, parent = dfs.parcourir_dfs(start_node=start)
 
     fig = Figure(figsize=(12, 9))
-    dfs.visualiser_parcours(parcours, start_node=start, fig=fig)
+    dfs.visualiser_parcours(parcours,parent,start_node=start, fig=fig)
 
     buf = _fig_to_png(fig)
     plt.close(fig)
