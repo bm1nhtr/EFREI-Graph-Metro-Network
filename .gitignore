@@ -4,10 +4,14 @@ __pycache__/
 *$py.class
 *.so
 .Python
+*.egg-info/
+dist/
+build/
 
 # Virtual environments
 venv/
 env/
+.venv/
 ENV/
 
 # IDE
@@ -15,8 +19,17 @@ ENV/
 .idea/
 *.swp
 *.swo
+*.sublime-*
 
+# Linting / type check
+.ruff_cache/
+.mypy_cache/
+.pyright/
 
+# Env / secrets
+.env
+.env.local
+*.log
 
 # OS
 .DS_Store

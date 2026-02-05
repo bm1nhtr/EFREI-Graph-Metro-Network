@@ -4,16 +4,20 @@ Fonctionne sur graphe pondéré à poids positifs.
 Sur le réseau métro : graphe non orienté.
 """
 
-from algorithms.utils import standardize_path, LAYOUT_METRO, LAYOUT_METRO_GUI
-import os
 import heapq
+import os
+
 import matplotlib.pyplot as plt
 import networkx as nx
 
+from algorithms.utils import LAYOUT_METRO, LAYOUT_METRO_GUI, standardize_path
+
 
 class Dijkstra:
+    """Plus courts chemins depuis une source (graphe à poids positifs)."""
+
     def __init__(self, graph_data):
-        # Stocke les données du graphe (arêtes + poids)
+        """Initialise avec les données du graphe (tableau d'arêtes [u, v, poids])."""
         self.graph_data = graph_data
 
     def get_neighbors_with_weights(self, node: int):
@@ -41,9 +45,10 @@ class Dijkstra:
 
     def dijkstra(self, start_node: int):
         """
-        Calcule les plus courts chemins depuis start_node avec Dijkstra.
+        Calcule les plus courts chemins depuis start_node (Dijkstra).
+
         Returns:
-            tuple: (distances, predecessors)
+            tuple: (distances dict, predecessors dict).
         """
         start_node = int(start_node)
         nodes = self.get_nodes()
@@ -74,8 +79,22 @@ class Dijkstra:
 
         return distances, predecessors
 
-    def sauvegarder_resultats(self, distances, predecessors, start_node, file_name="dijkstra_result.txt"):
-        """Sauvegarde les distances et les chemins calculés."""
+    def _get_shortest_path(self, predecessors, start_node: int, end_node: int):
+        """Reconstruit l'unique plus court chemin (source -> noeud) pour Dijkstra."""
+        if end_node == start_node:
+            return [start_node]
+        path = []
+        current = end_node
+        while current is not None:
+            path.append(current)
+            current = predecessors.get(current)
+        path.reverse()
+        return path if path and path[0] == start_node else []
+
+    def sauvegarder_resultats(
+        self, distances, predecessors, start_node, file_name="dijkstra_result.txt"
+    ):
+        """Sauvegarde distances, predecesseurs et chemins (source -> noeud) dans results/DIJKSTRA/."""
         results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "DIJKSTRA")
         os.makedirs(results_dir, exist_ok=True)
         output_path = standardize_path(os.path.join(results_dir, file_name))
@@ -92,6 +111,19 @@ class Dijkstra:
                 pred_str = str(pred) if pred is not None else "-"
                 f.write(f"{node}\t{d_str}\t{pred_str}\n")
 
+            f.write("\n# Chemins (source -> noeud)\n")
+            for node in sorted(distances.keys()):
+                if node == start_node:
+                    f.write(f"{start_node} -> {start_node}: [{start_node}]\n")
+                    continue
+                path = self._get_shortest_path(predecessors, start_node, node)
+                if not path:
+                    continue
+                dist_val = int(distances[node])
+                f.write(
+                    f"{start_node} -> {node} (dist={dist_val})  {' -> '.join(map(str, path))}\n"
+                )
+
         print(f"[OK] Résultats Dijkstra sauvegardés dans: {output_path}")
 
     def _shortest_path_tree_edges(self, predecessors):
@@ -103,7 +135,9 @@ class Dijkstra:
                 edges.add((node, pred))  # non orienté pour affichage
         return edges
 
-    def visualiser_parcours(self, distances, predecessors, start_node, file_name="dijkstra_visualization.png", fig=None):
+    def visualiser_parcours(
+        self, distances, predecessors, start_node, file_name="dijkstra_visualization.png", fig=None
+    ):
         """Visualise l’arbre des plus courts chemins de Dijkstra."""
         interactive = fig is not None
         if not interactive:
@@ -131,8 +165,9 @@ class Dijkstra:
         tree_edges = self._shortest_path_tree_edges(predecessors)
         edgelist_tree = [(u, v) for u, v in G.edges() if (u, v) in tree_edges]
         if edgelist_tree:
-            nx.draw_networkx_edges(G, pos, edgelist=edgelist_tree,
-                                   edge_color="blue", width=5, alpha=0.9, ax=ax)
+            nx.draw_networkx_edges(
+                G, pos, edgelist=edgelist_tree, edge_color="blue", width=5, alpha=0.9, ax=ax
+            )
 
         # Coloration des nœuds selon la distance
         max_d = max((d for d in distances.values() if d != float("inf")), default=1)
@@ -143,15 +178,29 @@ class Dijkstra:
             else:
                 node_colors.append(plt.cm.viridis(distances[n] / max_d))
 
-        nx.draw_networkx_nodes(G, pos, node_color=node_colors,
-                               node_size=600, alpha=0.9, ax=ax,
-                               edgecolors="black", linewidths=2)
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            node_color=node_colors,
+            node_size=600,
+            alpha=0.9,
+            ax=ax,
+            edgecolors="black",
+            linewidths=2,
+        )
 
         # Mettre en évidence la source
-        nx.draw_networkx_nodes(G, pos, nodelist=[start_node],
-                               node_color="red", node_size=800,
-                               alpha=1.0, ax=ax,
-                               edgecolors="darkred", linewidths=4)
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=[start_node],
+            node_color="red",
+            node_size=800,
+            alpha=1.0,
+            ax=ax,
+            edgecolors="darkred",
+            linewidths=4,
+        )
 
         # Labels
         labels = {node: str(node) for node in G.nodes()}
@@ -164,6 +213,7 @@ class Dijkstra:
 
         # Légende
         from matplotlib.patches import Patch
+
         legend_elements = [
             Patch(facecolor="red", label=f"Source ({start_node})"),
             Patch(facecolor="steelblue", label="Nœuds (couleur = distance)"),
@@ -171,17 +221,16 @@ class Dijkstra:
         ]
 
         if interactive:
-            ax.legend(handles=legend_elements, loc="upper left",
-                      fontsize=10, bbox_to_anchor=(1.02, 1))
+            ax.legend(
+                handles=legend_elements, loc="upper left", fontsize=10, bbox_to_anchor=(1.02, 1)
+            )
         else:
             ax.legend(handles=legend_elements, loc="upper right", fontsize=10)
 
         # Barre de couleur
-        sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis,
-                                   norm=plt.Normalize(vmin=0, vmax=max_d))
+        sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis, norm=plt.Normalize(vmin=0, vmax=max_d))
         sm.set_array([])
-        cbar = plt.colorbar(sm, ax=ax, orientation="vertical",
-                            fraction=0.02, pad=0.04)
+        cbar = plt.colorbar(sm, ax=ax, orientation="vertical", fraction=0.02, pad=0.04)
         cbar.set_label("Distance depuis la source", rotation=270, labelpad=20)
 
         if interactive:

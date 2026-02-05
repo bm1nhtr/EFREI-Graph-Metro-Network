@@ -3,15 +3,19 @@ Algorithme de Kruskal - Arbre couvrant de poids minimum (MST)
 Sur le graphe non orienté du réseau métro (poids = temps de trajet).
 """
 
-from algorithms.utils import standardize_path, LAYOUT_METRO, LAYOUT_METRO_GUI
 import os
+
 import matplotlib.pyplot as plt
 import networkx as nx
 
+from algorithms.utils import LAYOUT_METRO, LAYOUT_METRO_GUI, standardize_path
+
 
 class Kruskal:
+    """Arbre couvrant de poids minimum (MST) par l'algorithme de Kruskal (Union-Find)."""
+
     def __init__(self, graph_data):
-        # Stocke les données du graphe (arêtes + poids)
+        """Initialise avec les données du graphe (tableau d'arêtes [u, v, poids])."""
         self.graph_data = graph_data
 
     def get_edges_with_weights(self):
@@ -40,7 +44,7 @@ class Kruskal:
         return parent[node]
 
     def union(self, parent, rank, x, y):
-        # Fusionne deux composantes en respectant la hauteur des arbres
+        """Fusionne les composantes de x et y (Union-Find par rang)."""
         root_x = self.find(parent, x)
         root_y = self.find(parent, y)
 
@@ -107,8 +111,9 @@ class Kruskal:
 
         print(f"[OK] Résultats Kruskal sauvegardés dans: {output_path}")
 
-    def visualiser_mst(self, mst_edges, total_weight, start_node, file_name="kruskal_visualization.png", fig=None):
-        
+    def visualiser_mst(
+        self, mst_edges, total_weight, start_node, file_name="kruskal_visualization.png", fig=None
+    ):
         """Visualise le MST sur le graphe du réseau métro. Si fig fourni (GUI), dessine dessus et ne sauvegarde pas."""
         interactive = fig is not None
         if not interactive:
@@ -132,22 +137,31 @@ class Kruskal:
         for u, v, _ in mst_edges:
             mst_edge_set.add((u, v))
             mst_edge_set.add((v, u))
-        edgelist_mst = [(u, v) for u, v in G.edges()
-                        if (u, v) in mst_edge_set or (v, u) in mst_edge_set]
-        nx.draw_networkx_edges(G, pos, edgelist=edgelist_mst,
-                            edge_color="green", width=5, alpha=0.9, ax=ax)
+        edgelist_mst = [
+            (u, v) for u, v in G.edges() if (u, v) in mst_edge_set or (v, u) in mst_edge_set
+        ]
+        nx.draw_networkx_edges(
+            G, pos, edgelist=edgelist_mst, edge_color="green", width=5, alpha=0.9, ax=ax
+        )
 
         # Poids sur les arêtes (comme Prim)
         edge_list = list(G.edges())
         edge_labels = {(u, v): str(G[u][v]["weight"]) for u, v in edge_list}
-        for edges_sub, label_pos in [(edge_list[0::3], 0.25),
-                                    (edge_list[1::3], 0.5),
-                                    (edge_list[2::3], 0.75)]:
+        for edges_sub, label_pos in [
+            (edge_list[0::3], 0.25),
+            (edge_list[1::3], 0.5),
+            (edge_list[2::3], 0.75),
+        ]:
             sub_labels = {e: edge_labels[e] for e in edges_sub if e in edge_labels}
             if sub_labels:
                 nx.draw_networkx_edge_labels(
-                    G, pos, sub_labels, font_size=10, label_pos=label_pos, ax=ax,
-                    bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85)
+                    G,
+                    pos,
+                    sub_labels,
+                    font_size=10,
+                    label_pos=label_pos,
+                    ax=ax,
+                    bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85),
                 )
 
         # Nœuds du MST
@@ -155,14 +169,30 @@ class Kruskal:
         for u, v, _ in mst_edges:
             mst_nodes.add(u)
             mst_nodes.add(v)
-        nx.draw_networkx_nodes(G, pos, nodelist=list(mst_nodes),
-                            node_color="seagreen", node_size=600,
-                            alpha=0.9, ax=ax, edgecolors="black", linewidths=2)
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=list(mst_nodes),
+            node_color="seagreen",
+            node_size=600,
+            alpha=0.9,
+            ax=ax,
+            edgecolors="black",
+            linewidths=2,
+        )
 
         # Racine en rouge (pour cohérence avec Prim)
-        nx.draw_networkx_nodes(G, pos, nodelist=[start_node],
-                            node_color="red", node_size=800,
-                            alpha=1.0, ax=ax, edgecolors="darkred", linewidths=4)
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=[start_node],
+            node_color="red",
+            node_size=800,
+            alpha=1.0,
+            ax=ax,
+            edgecolors="darkred",
+            linewidths=4,
+        )
 
         labels = {node: str(node) for node in G.nodes()}
         nx.draw_networkx_labels(G, pos, labels, font_size=10, ax=ax)
@@ -170,12 +200,15 @@ class Kruskal:
         ax.set_title(
             f"MST (Kruskal) - Racine: Station {start_node}\n"
             f"Poids total: {total_weight} min | Arêtes: {len(mst_edges)}",
-            fontsize=16, fontweight="bold", pad=20
+            fontsize=16,
+            fontweight="bold",
+            pad=20,
         )
         ax.axis("off")
 
         # Légende (comme Prim, adaptée)
         from matplotlib.patches import Patch
+
         legend_elements = [
             Patch(facecolor="red", label=f"Racine ({start_node})"),
             Patch(facecolor="seagreen", label="Stations dans le MST"),
@@ -183,7 +216,9 @@ class Kruskal:
             Patch(facecolor="green", edgecolor="green", label="Arêtes du MST (Kruskal)"),
         ]
         if interactive:
-            ax.legend(handles=legend_elements, loc="upper left", fontsize=10, bbox_to_anchor=(1.02, 1))
+            ax.legend(
+                handles=legend_elements, loc="upper left", fontsize=10, bbox_to_anchor=(1.02, 1)
+            )
         else:
             ax.legend(handles=legend_elements, loc="upper right", fontsize=10)
 

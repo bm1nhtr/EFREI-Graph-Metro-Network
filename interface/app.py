@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Projet Graph - Réseau Métro - Application Web
 Permet d'accéder au projet depuis un navigateur (réseau local ou déploiement).
@@ -7,8 +6,8 @@ Lancer depuis la racine du projet : python interface/app.py
 """
 
 import io
-import sys
 import os
+import sys
 
 # Racine du projet (parent du dossier interface/)
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -16,20 +15,20 @@ sys.path.insert(0, project_root)
 
 # Backend matplotlib sans interface graphique (pour serveur)
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
 from flask import Flask, render_template, request, send_file
 from matplotlib.figure import Figure
 
+from algorithms.bellman_ford import BellmanFord
+from algorithms.bfs import BFS
+from algorithms.dfs import DFS
+from algorithms.dijkstra import Dijkstra
+from algorithms.kruskal import Kruskal
+from algorithms.prim import Prim
 from algorithms.utils import load_graph_data
 from algorithms.visualize_metro import visualize_metro_network
-from algorithms.bfs import BFS
-from algorithms.prim import Prim
-from algorithms.bellman_ford import BellmanFord
-from algorithms.dijkstra import Dijkstra
-from algorithms.dfs import DFS
-from algorithms.kruskal import Kruskal
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), "templates"))
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
@@ -38,8 +37,17 @@ N_STATIONS = 19
 
 
 def get_graph_data():
+    """Charge le graphe depuis data/metro_network.npy. Retourne None si absent."""
     try:
         return load_graph_data("metro_network.npy")
+    except FileNotFoundError:
+        return None
+
+
+def get_bellman_graph_data():
+    """Graphe avec 1 poids négatif (option A). Retourne None si absent."""
+    try:
+        return load_graph_data("metro_network_bellman.npy")
     except FileNotFoundError:
         return None
 
@@ -49,7 +57,7 @@ def get_reference_edges():
     ref_path = os.path.join(project_root, "results", "REFERENCE_GRAPHE_VERIFICATION.txt")
     edges = []
     if os.path.exists(ref_path):
-        with open(ref_path, "r", encoding="utf-8") as f:
+        with open(ref_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line or line.startswith("#"):
@@ -65,11 +73,13 @@ def get_reference_edges():
 
 @app.route("/")
 def index():
+    """Page d'accueil : choix de la visualisation et de la station de depart."""
     return render_template(
         "index.html",
         n_stations=N_STATIONS,
         reference_edges=get_reference_edges(),
         graph_available=get_graph_data() is not None,
+        graph_bellman_available=get_bellman_graph_data() is not None,
     )
 
 
@@ -98,12 +108,31 @@ def _fig_to_png(fig, dpi=150):
 
 @app.route("/api/visualize/metro")
 def api_visualize_metro():
-    """Image PNG du graphe métro."""
-    if get_graph_data() is None:
-        return "Graphe non trouvé. Exécutez d'abord: python algorithms/graph_network.py", 404
+    """Image PNG du graphe métro (normal ou Bellman selon query param)."""
+    use_bellman = request.args.get("bellman", "").lower() in ("1", "true", "yes")
+    if use_bellman and get_bellman_graph_data() is not None:
+        fig = Figure(figsize=(12, 9))
+        ax = fig.add_subplot(111)
+        visualize_metro_network(fig=fig, ax=ax, use_bellman_graph=True)
+    else:
+        if get_graph_data() is None:
+            return "Graphe non trouvé. Exécutez: python algorithms/graph_network.py", 404
+        fig = Figure(figsize=(12, 9))
+        ax = fig.add_subplot(111)
+        visualize_metro_network(fig=fig, ax=ax)
+    buf = _fig_to_png(fig)
+    plt.close(fig)
+    return send_file(buf, mimetype="image/png")
+
+
+@app.route("/api/visualize/metro_bellman")
+def api_visualize_metro_bellman():
+    """Image PNG du graphe métro avec poids négatif (option A - Bellman)."""
+    if get_bellman_graph_data() is None:
+        return "Graphe Bellman non trouvé. Exécutez: python algorithms/graph_network.py", 404
     fig = Figure(figsize=(12, 9))
     ax = fig.add_subplot(111)
-    visualize_metro_network(fig=fig, ax=ax)
+    visualize_metro_network(fig=fig, ax=ax, use_bellman_graph=True)
     buf = _fig_to_png(fig)
     plt.close(fig)
     return send_file(buf, mimetype="image/png")
@@ -165,7 +194,9 @@ def api_visualize_bellman_ford():
     start = request.args.get("start", type=int, default=10)
     if start is None or start < 0 or start >= N_STATIONS:
         start = 10
-    data = get_graph_data()
+    data = get_bellman_graph_data()
+    if data is None:
+        data = get_graph_data()
     if data is None:
         return "Graphe non trouvé.", 404
     bf = BellmanFord(data)
@@ -175,6 +206,7 @@ def api_visualize_bellman_ford():
     buf = _fig_to_png(fig)
     plt.close(fig)
     return send_file(buf, mimetype="image/png")
+
 
 @app.route("/api/visualize/dijkstra")
 def api_visualize_dijkstra():
@@ -196,6 +228,7 @@ def api_visualize_dijkstra():
     plt.close(fig)
     return send_file(buf, mimetype="image/png")
 
+
 @app.route("/api/visualize/dfs")
 def api_visualize_dfs():
     start = request.args.get("start", type=int, default=10)
@@ -210,11 +243,12 @@ def api_visualize_dfs():
     parcours, parent = dfs.parcourir_dfs(start_node=start)
 
     fig = Figure(figsize=(12, 9))
-    dfs.visualiser_parcours(parcours,parent,start_node=start, fig=fig)
+    dfs.visualiser_parcours(parcours, parent, start_node=start, fig=fig)
 
     buf = _fig_to_png(fig)
     plt.close(fig)
     return send_file(buf, mimetype="image/png")
+
 
 @app.route("/api/visualize/dfs_tree")
 def api_visualize_dfs_tree():

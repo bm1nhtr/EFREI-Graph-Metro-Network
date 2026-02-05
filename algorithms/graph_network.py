@@ -1,80 +1,127 @@
-import numpy as np
+"""
+Graphe Réseau Métro - Non orienté.
 
-"""
-Graphe Réseau Métro - Non orienté
 Représente un système de métro avec des stations et des connexions.
-Nœuds : Stations de métro (numérotées de 0 à 18)
-Arêtes : Connexions entre stations avec poids (temps de trajet en minutes)
-Le graphe est NON ORIENTÉ - on peut voyager dans les deux sens
+Nœuds : stations (0-18). Arêtes : connexions avec poids (temps en minutes).
+Le graphe est NON ORIENTÉ.
+
+Dataset : propre graphe thématique (réseau de transport), disponible en
+JSON, CSV, TXT et NPY dans data/.
 """
+
+import json
+import os
+
+import numpy as np
 
 # Réseau Métro : 19 stations (0-18)
 # Format : [station_a, station_b, temps_trajet_minutes]
-# Comme c'est non orienté, chaque arête représente une connexion bidirectionnelle
+# Chaque arête = connexion bidirectionnelle
 
-metro_network = np.array([
-    # Ligne 1 (7 stations : 0-6)
-    [0, 1, 3],   # Station 0 -> Station 1 : 3 minutes
-    [1, 2, 2],   # Station 1 -> Station 2 : 2 minutes
-    [2, 3, 4],   # Station 2 -> Station 3 : 4 minutes
-    [3, 4, 3],   # Station 3 -> Station 4 : 3 minutes
-    [4, 5, 2],   # Station 4 -> Station 5 : 2 minutes
-    [5, 6, 3],   # Station 5 -> Station 6 : 3 minutes
+METRO_NETWORK = np.array(
+    [
+        # Ligne 1 (7 stations : 0-6)
+        [0, 1, 3],
+        [1, 2, 2],
+        [2, 3, 4],
+        [3, 4, 3],
+        [4, 5, 2],
+        [5, 6, 3],
+        # Ligne 2 (5 stations : 7-11)
+        [7, 8, 3],
+        [8, 9, 2],
+        [9, 10, 4],
+        [10, 11, 3],
+        # Ligne 3 (7 stations : 12-18)
+        [12, 13, 3],
+        [13, 14, 2],
+        [14, 15, 4],
+        [15, 16, 3],
+        [16, 17, 2],
+        [17, 18, 3],
+        # Correspondances
+        [3, 8, 1],
+        [5, 10, 1],
+        [6, 13, 1],
+        [4, 15, 1],
+    ],
+    dtype=int,
+)
 
-    # Ligne 2 (5 stations : 7-11)
-    [7, 8, 3],   # Station 7 -> Station 8 : 3 minutes
-    [8, 9, 2],   # Station 8 -> Station 9 : 2 minutes
-    [9, 10, 4],  # Station 9 -> Station 10 : 4 minutes
-    [10, 11, 3], # Station 10 -> Station 11 : 3 minutes
+# Variante pour Bellman-Ford : cas contrôlé avec 1 poids négatif.
+# Arête (3, 8) : 1 -> -1 pour créer un cycle négatif 3-8-3 (détection par Bellman-Ford).
+# Les autres algorithmes utilisent METRO_NETWORK (sans poids négatif).
+METRO_NETWORK_BELLMAN = METRO_NETWORK.copy()
+for i in range(len(METRO_NETWORK_BELLMAN)):
+    if int(METRO_NETWORK_BELLMAN[i, 0]) == 3 and int(METRO_NETWORK_BELLMAN[i, 1]) == 8:
+        METRO_NETWORK_BELLMAN[i, 2] = -1
+        break
+METRO_NETWORK_BELLMAN = METRO_NETWORK_BELLMAN.astype(np.int64)
 
-    # Ligne 3 (7 stations : 12-18)
-    [12, 13, 3], # Station 12 -> Station 13 : 3 minutes
-    [13, 14, 2], # Station 13 -> Station 14 : 2 minutes
-    [14, 15, 4], # Station 14 -> Station 15 : 4 minutes
-    [15, 16, 3], # Station 15 -> Station 16 : 3 minutes
-    [16, 17, 2], # Station 16 -> Station 17 : 2 minutes
-    [17, 18, 3], # Station 17 -> Station 18 : 3 minutes
 
-    # Stations de correspondance (connectent différentes lignes)
-    [3, 8, 1],   # Station 3 (Ligne 1) <-> Station 8 (Ligne 2)
-    [5, 10, 1],  # Station 5 (Ligne 1) <-> Station 10 (Ligne 2)
-    [6, 13, 1],  # Station 6 (Ligne 1) <-> Station 13 (Ligne 3)
-    [4, 15, 1],  # Station 4 (Ligne 1) <-> Station 15 (Ligne 3)
-], dtype=int)
+def save_metro_network() -> None:
+    """Sauvegarde le graphe en .npy, .txt, .csv et .json dans data/."""
+    data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+    os.makedirs(data_dir, exist_ok=True)
 
-# Sauvegarder en format numpy array (.npy)
-import os
-data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
-os.makedirs(data_dir, exist_ok=True)
-np.save(os.path.join(data_dir, 'metro_network.npy'), metro_network)
+    # NPY (utilisé par l'app)
+    npy_path = os.path.join(data_dir, "metro_network.npy")
+    np.save(npy_path, METRO_NETWORK)
 
-# Sauvegarder en fichier texte (format lisible)
-with open(os.path.join(data_dir, 'metro_network.txt'), 'w', encoding='utf-8') as f:
-    f.write("# Graphe Réseau Métro (Non orienté)\n")
-    f.write("# Format : station_a station_b temps_trajet_minutes\n")
-    f.write("# Total stations : 19 (0-18)\n")
-    f.write("# Total connexions : {}\n".format(len(metro_network)))
-    f.write("# Le graphe est NON ORIENTÉ - les arêtes représentent des connexions bidirectionnelles\n\n")
-    for edge in metro_network:
-        f.write("{} {} {}\n".format(edge[0], edge[1], edge[2]))
+    # TXT (lisible)
+    txt_path = os.path.join(data_dir, "metro_network.txt")
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write("# Graphe Réseau Métro (Non orienté)\n")
+        f.write("# Format : station_a station_b temps_trajet_minutes\n")
+        f.write("# Total stations : 19 (0-18)\n")
+        f.write(f"# Total connexions : {len(METRO_NETWORK)}\n\n")
+        for edge in METRO_NETWORK:
+            f.write(f"{edge[0]} {edge[1]} {edge[2]}\n")
 
-print("=" * 60)
-print("Graphe Réseau Métro Créé")
-print("=" * 60)
-print(f"Total stations (nœuds) : 19 (0-18)")
-print(f"Total connexions (arêtes) : {len(metro_network)}")
-print(f"Type de graphe : NON ORIENTÉ")
-print(f"\nFichiers créés :")
-print(f"  - metro_network.npy (format binaire numpy)")
-print(f"  - metro_network.txt (format texte lisible)")
-print(f"\nStructure du graphe :")
-print(f"  - Ligne 1 : Stations 0-6 (7 stations)")
-print(f"  - Ligne 2 : Stations 7-11 (5 stations)")
-print(f"  - Ligne 3 : Stations 12-18 (7 stations)")
-print(f"  - Stations de correspondance : Connectent différentes lignes")
-print(f"  - Poids : Temps de trajet en minutes (1-4 minutes)")
-print(f"\nExemples de connexions :")
-print(f"  Station 0 <-> Station 1 : {metro_network[0][2]} minutes")
-print(f"  Station 3 <-> Station 8 : {metro_network[16][2]} minutes (correspondance)")
-print(f"  Station 6 <-> Station 13 : {metro_network[18][2]} minutes (correspondance)")
-print("=" * 60)
+    # CSV (dataset standard)
+    csv_path = os.path.join(data_dir, "metro_network.csv")
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        f.write("station_a,station_b,temps_minutes\n")
+        for edge in METRO_NETWORK:
+            f.write(f"{edge[0]},{edge[1]},{edge[2]}\n")
+
+    # JSON (dataset standard)
+    json_path = os.path.join(data_dir, "metro_network.json")
+    edges = [
+        {"station_a": int(u), "station_b": int(v), "temps_minutes": int(w)}
+        for u, v, w in METRO_NETWORK
+    ]
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(
+            {"description": "Réseau métro (graphe non orienté)", "stations": 19, "edges": edges},
+            f,
+            indent=2,
+        )
+
+    # Bellman-Ford : graphe avec 1 poids négatif (option A - sujet)
+    bellman_npy = os.path.join(data_dir, "metro_network_bellman.npy")
+    np.save(bellman_npy, METRO_NETWORK_BELLMAN)
+    bellman_txt = os.path.join(data_dir, "metro_network_bellman.txt")
+    with open(bellman_txt, "w", encoding="utf-8") as f:
+        f.write("# Graphe métro - Variante Bellman-Ford (cas contrôlé)\n")
+        f.write("# 1 poids négatif : arête (3,8) = -1 → cycle négatif 3-8-3\n")
+        f.write("# Utilisé uniquement pour Bellman-Ford (détection cycle négatif).\n")
+        f.write("# Total stations : 19 (0-18)\n")
+        f.write(f"# Total connexions : {len(METRO_NETWORK_BELLMAN)}\n\n")
+        for edge in METRO_NETWORK_BELLMAN:
+            f.write(f"{edge[0]} {edge[1]} {edge[2]}\n")
+
+    print(
+        f"Fichiers créés : {npy_path}, {txt_path}, {csv_path}, {json_path}, {bellman_npy}, {bellman_txt}"
+    )
+
+
+if __name__ == "__main__":
+    save_metro_network()
+    print("=" * 60)
+    print("Graphe Réseau Métro Créé")
+    print("=" * 60)
+    print("Total stations (nœuds) : 19 (0-18)")
+    print(f"Total connexions (arêtes) : {len(METRO_NETWORK)}")
+    print("Type de graphe : NON ORIENTÉ")
+    print("=" * 60)

@@ -3,15 +3,19 @@ Algorithme de Prim - Arbre couvrant de poids minimum (MST)
 Sur le graphe non orienté du réseau métro (poids = temps de trajet).
 """
 
-from algorithms.utils import standardize_path, LAYOUT_METRO, LAYOUT_METRO_GUI
 import os
+
 import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as np
+
+from algorithms.utils import LAYOUT_METRO, LAYOUT_METRO_GUI, standardize_path
 
 
 class Prim:
+    """Arbre couvrant de poids minimum (MST) par l'algorithme de Prim."""
+
     def __init__(self, graph_data):
+        """Initialise avec les données du graphe (tableau d'arêtes [u, v, poids])."""
         self.graph_data = graph_data
 
     def get_edges_with_weights(self):
@@ -101,7 +105,9 @@ class Prim:
 
         print(f"[OK] Résultats Prim sauvegardés dans: {output_path}")
 
-    def visualiser_mst(self, mst_edges, total_weight, start_node, file_name="prim_visualization.png", fig=None):
+    def visualiser_mst(
+        self, mst_edges, total_weight, start_node, file_name="prim_visualization.png", fig=None
+    ):
         """Visualise le MST sur le graphe du réseau métro. Si fig fourni (GUI), dessine dessus et ne sauvegarde pas."""
         interactive = fig is not None
         if not interactive:
@@ -117,7 +123,6 @@ class Prim:
         pos = nx.spring_layout(G, k=2, iterations=50, seed=42)
 
         # Arêtes du graphe complet (grises)
-        all_edges = list(G.edges())
         nx.draw_networkx_nodes(G, pos, node_color="lightgray", node_size=400, alpha=0.6, ax=ax)
         nx.draw_networkx_edges(G, pos, edge_color="lightgray", width=1.5, alpha=0.4, ax=ax)
 
@@ -126,34 +131,75 @@ class Prim:
         for u, v, _ in mst_edges:
             mst_edge_set.add((u, v))
             mst_edge_set.add((v, u))
-        edgelist_mst = [(u, v) for u, v in G.edges() if (u, v) in mst_edge_set or (v, u) in mst_edge_set]
-        nx.draw_networkx_edges(G, pos, edgelist=edgelist_mst, edge_color="blue", width=5, alpha=0.9, ax=ax)
+        edgelist_mst = [
+            (u, v) for u, v in G.edges() if (u, v) in mst_edge_set or (v, u) in mst_edge_set
+        ]
+        nx.draw_networkx_edges(
+            G, pos, edgelist=edgelist_mst, edge_color="blue", width=5, alpha=0.9, ax=ax
+        )
 
         # Poids sur les arêtes (pour vérification manuelle) — répartis pour limiter les chevauchements
         edge_list = list(G.edges())
         edge_labels = {(u, v): str(G[u][v]["weight"]) for u, v in edge_list}
-        for edges_sub, label_pos in [(edge_list[0::3], 0.25), (edge_list[1::3], 0.5), (edge_list[2::3], 0.75)]:
+        for edges_sub, label_pos in [
+            (edge_list[0::3], 0.25),
+            (edge_list[1::3], 0.5),
+            (edge_list[2::3], 0.75),
+        ]:
             sub_labels = {e: edge_labels[e] for e in edges_sub if e in edge_labels}
             if sub_labels:
-                nx.draw_networkx_edge_labels(G, pos, sub_labels, font_size=10, label_pos=label_pos, ax=ax,
-                                             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85))
+                nx.draw_networkx_edge_labels(
+                    G,
+                    pos,
+                    sub_labels,
+                    font_size=10,
+                    label_pos=label_pos,
+                    ax=ax,
+                    bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85),
+                )
 
         # Nœuds du MST
         mst_nodes = set()
         for u, v, _ in mst_edges:
             mst_nodes.add(u)
             mst_nodes.add(v)
-        nx.draw_networkx_nodes(G, pos, nodelist=list(mst_nodes), node_color="steelblue", node_size=600, alpha=0.9, ax=ax, edgecolors="black", linewidths=2)
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=list(mst_nodes),
+            node_color="steelblue",
+            node_size=600,
+            alpha=0.9,
+            ax=ax,
+            edgecolors="black",
+            linewidths=2,
+        )
         # Racine en rouge pour contraster avec les bleus
-        nx.draw_networkx_nodes(G, pos, nodelist=[start_node], node_color="red", node_size=800, alpha=1.0, ax=ax, edgecolors="darkred", linewidths=4)
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=[start_node],
+            node_color="red",
+            node_size=800,
+            alpha=1.0,
+            ax=ax,
+            edgecolors="darkred",
+            linewidths=4,
+        )
 
         labels = {node: str(node) for node in G.nodes()}
         nx.draw_networkx_labels(G, pos, labels, font_size=10, ax=ax)
 
-        ax.set_title(f"MST (Prim) - Racine: Station {start_node}\nPoids total: {total_weight} min | Arêtes: {len(mst_edges)}", fontsize=16, fontweight="bold", pad=20)
+        ax.set_title(
+            f"MST (Prim) - Racine: Station {start_node}\nPoids total: {total_weight} min | Arêtes: {len(mst_edges)}",
+            fontsize=16,
+            fontweight="bold",
+            pad=20,
+        )
         ax.axis("off")
 
         from matplotlib.patches import Patch
+
         legend_elements = [
             Patch(facecolor="red", label=f"Racine ({start_node})"),
             Patch(facecolor="steelblue", label="Stations dans le MST"),
@@ -161,7 +207,9 @@ class Prim:
             Patch(facecolor="blue", edgecolor="blue", label="Arêtes du MST"),
         ]
         if interactive:
-            ax.legend(handles=legend_elements, loc="upper left", fontsize=10, bbox_to_anchor=(1.02, 1))
+            ax.legend(
+                handles=legend_elements, loc="upper left", fontsize=10, bbox_to_anchor=(1.02, 1)
+            )
         else:
             ax.legend(handles=legend_elements, loc="upper right", fontsize=10)
 

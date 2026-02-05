@@ -1,0 +1,106 @@
+{
+  "description": "R\u00e9seau m\u00e9tro (graphe non orient\u00e9)",
+  "stations": 19,
+  "edges": [
+    {
+      "station_a": 0,
+      "station_b": 1,
+      "temps_minutes": 3
+    },
+    {
+      "station_a": 1,
+      "station_b": 2,
+      "temps_minutes": 2
+    },
+    {
+      "station_a": 2,
+      "station_b": 3,
+      "temps_minutes": 4
+    },
+    {
+      "station_a": 3,
+      "station_b": 4,
+      "temps_minutes": 3
+    },
+    {
+      "station_a": 4,
+      "station_b": 5,
+      "temps_minutes": 2
+    },
+    {
+      "station_a": 5,
+      "station_b": 6,
+      "temps_minutes": 3
+    },
+    {
+      "station_a": 7,
+      "station_b": 8,
+      "temps_minutes": 3
+    },
+    {
+      "station_a": 8,
+      "station_b": 9,
+      "temps_minutes": 2
+    },
+    {
+      "station_a": 9,
+      "station_b": 10,
+      "temps_minutes": 4
+    },
+    {
+      "station_a": 10,
+      "station_b": 11,
+      "temps_minutes": 3
+    },
+    {
+      "station_a": 12,
+      "station_b": 13,
+      "temps_minutes": 3
+    },
+    {
+      "station_a": 13,
+      "station_b": 14,
+      "temps_minutes": 2
+    },
+    {
+      "station_a": 14,
+      "station_b": 15,
+      "temps_minutes": 4
+    },
+    {
+      "station_a": 15,
+      "station_b": 16,
+      "temps_minutes": 3
+    },
+    {
+      "station_a": 16,
+      "station_b": 17,
+      "temps_minutes": 2
+    },
+    {
+      "station_a": 17,
+      "station_b": 18,
+      "temps_minutes": 3
+    },
+    {
+      "station_a": 3,
+      "station_b": 8,
+      "temps_minutes": 1
+    },
+    {
+      "station_a": 5,
+      "station_b": 10,
+      "temps_minutes": 1
+    },
+    {
+      "station_a": 6,
+      "station_b": 13,
+      "temps_minutes": 1
+    },
+    {
+      "station_a": 4,
+      "station_b": 15,
+      "temps_minutes": 1
+    }
+  ]
+}

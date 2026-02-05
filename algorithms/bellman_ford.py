@@ -4,11 +4,12 @@ Fonctionne sur graphe avec poids (éventuellement négatifs).
 Sur le réseau métro : chaque arête non orientée est traitée comme deux arcs (u->v, v->u).
 """
 
-from algorithms.utils import standardize_path, LAYOUT_METRO, LAYOUT_METRO_GUI
 import os
+
 import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as np
+
+from algorithms.utils import LAYOUT_METRO, LAYOUT_METRO_GUI, standardize_path
 
 
 class BellmanFord:
@@ -74,8 +75,11 @@ class BellmanFord:
 
         return distances, predecessors, has_negative_cycle
 
-    def get_shortest_path(self, predecessors, start_node: int, end_node: int, pred_index: int = 0):
+    def get_shortest_path(
+        self, predecessors, start_node: int, end_node: int, pred_index: int = 0, max_steps: int = 50
+    ):
         """Reconstruit un plus court chemin de start_node à end_node (utilise le pred_index-ième prédécesseur).
+        Limite à max_steps pour éviter boucle infinie en cas de cycle négatif.
         Returns:
             list: Liste des nœuds du chemin, ou [] si pas de chemin.
         """
@@ -84,17 +88,30 @@ class BellmanFord:
             return []
         path = []
         current = end_node
-        while current is not None:
+        visited = set()
+        steps = 0
+        while current is not None and steps < max_steps:
+            if current in visited:
+                break  # cycle détecté
+            visited.add(current)
             path.append(current)
             pred_list = predecessors.get(current)
             if not pred_list:
                 break
             idx = min(pred_index, len(pred_list) - 1)
             current = pred_list[idx]
+            steps += 1
         path.reverse()
         return path if path and path[0] == start_node else []
 
-    def sauvegarder_resultats(self, distances, predecessors, start_node, has_negative_cycle, file_name="bellman_ford_result.txt"):
+    def sauvegarder_resultats(
+        self,
+        distances,
+        predecessors,
+        start_node,
+        has_negative_cycle,
+        file_name="bellman_ford_result.txt",
+    ):
         """Sauvegarde les distances et prédécesseurs.
         Args:
             distances (dict): Nœud -> distance depuis la source.
@@ -111,6 +128,16 @@ class BellmanFord:
             f.write("# Résultats Bellman-Ford - Plus courts chemins depuis la source\n")
             f.write(f"# Source: Station {start_node}\n")
             f.write(f"# Cycle de poids négatif détecté: {has_negative_cycle}\n\n")
+            if has_negative_cycle:
+                f.write(
+                    "# Explication (cas contrôlé avec 1 poids négatif, ex. arête 3-8 = -1) :\n"
+                    '# - Un cycle négatif (ex. 3→8→3) permet de diminuer la "distance" à l\'infini.\n'
+                    "# - Les PCC n'existent pas : on ne reconstruit donc pas les chemins.\n"
+                    '# - Les valeurs "Distance" ci-dessous sont des artefacts des relaxations (elles\n'
+                    "#   deviennent très négatives car l'algo utilise le cycle à chaque itération).\n"
+                    "#   En théorie, les vrais plus courts chemins seraient -infini pour les nœuds\n"
+                    "#   atteignables depuis le cycle.\n\n"
+                )
             f.write("# Noeud\tDistance\tPredecesseur(s)\n")
             for node in sorted(distances.keys()):
                 d = distances[node]
@@ -118,22 +145,29 @@ class BellmanFord:
                 d_str = str(int(d)) if d != float("inf") else "inf"
                 p_str = ",".join(map(str, pred_list)) if pred_list else "-"
                 f.write(f"{node}\t{d_str}\t{p_str}\n")
-            f.write("\n# Chemins (source -> noeud) — tous les PCC quand plusieurs existent\n")
-            for node in sorted(distances.keys()):
-                if node == start_node:
-                    f.write(f"{start_node} -> {start_node}: [{start_node}]\n")
-                    continue
-                pred_list = predecessors.get(node) or []
-                if not pred_list:
-                    continue
-                dist_val = int(distances[node])
-                for idx in range(len(pred_list)):
-                    path = self.get_shortest_path(predecessors, start_node, node, pred_index=idx)
-                    if path:
-                        num = f"  Path {idx+1}: " if len(pred_list) > 1 else "  "
-                        f.write(f"{start_node} -> {node} (dist={dist_val}){num}{' -> '.join(map(str, path))}\n")
-                if len(pred_list) > 1:
-                    f.write("\n")
+            if has_negative_cycle:
+                f.write("\n# Chemins non reconstruits (cycle de poids négatif détecté).\n")
+            else:
+                f.write("\n# Chemins (source -> noeud) — tous les PCC quand plusieurs existent\n")
+                for node in sorted(distances.keys()):
+                    if node == start_node:
+                        f.write(f"{start_node} -> {start_node}: [{start_node}]\n")
+                        continue
+                    pred_list = predecessors.get(node) or []
+                    if not pred_list:
+                        continue
+                    dist_val = int(distances[node])
+                    for idx in range(len(pred_list)):
+                        path = self.get_shortest_path(
+                            predecessors, start_node, node, pred_index=idx
+                        )
+                        if path:
+                            num = f"  Path {idx + 1}: " if len(pred_list) > 1 else "  "
+                            f.write(
+                                f"{start_node} -> {node} (dist={dist_val}){num}{' -> '.join(map(str, path))}\n"
+                            )
+                    if len(pred_list) > 1:
+                        f.write("\n")
 
         print(f"[OK] Résultats Bellman-Ford sauvegardés dans: {output_path}")
 
@@ -146,7 +180,15 @@ class BellmanFord:
                 edges.add((node, pred))  # non orienté pour dessin
         return edges
 
-    def visualiser_parcours(self, distances, predecessors, start_node, has_negative_cycle, file_name="bellman_ford_visualization.png", fig=None):
+    def visualiser_parcours(
+        self,
+        distances,
+        predecessors,
+        start_node,
+        has_negative_cycle,
+        file_name="bellman_ford_visualization.png",
+        fig=None,
+    ):
         """Visualise l'arbre des plus courts chemins. Si fig fourni (GUI), dessine dessus et ne sauvegarde pas."""
         interactive = fig is not None
         if not interactive:
@@ -157,72 +199,126 @@ class BellmanFord:
 
         G = nx.Graph()
         for edge in self.graph_data:
-            source, target, weight = edge
-            G.add_edge(source, target, weight=weight)
+            source, target, weight = float(edge[0]), float(edge[1]), float(edge[2])
+            G.add_edge(int(source), int(target), weight=weight)
         pos = nx.spring_layout(G, k=2, iterations=50, seed=42)
 
-        # Toutes les arêtes (gris)
         nx.draw_networkx_nodes(G, pos, node_color="lightgray", node_size=400, alpha=0.6, ax=ax)
         edges = G.edges()
         weights = [G[u][v]["weight"] for u, v in edges]
-        edge_colors = plt.cm.Reds([w / 4.0 for w in weights])
+        has_neg_w = any(w < 0 for w in weights)
+        if has_neg_w:
+            w_min, w_max = min(weights), max(weights)
+            norm = plt.Normalize(vmin=w_min, vmax=max(w_max, 1e-6))
+            edge_colors = plt.cm.RdBu_r(norm(weights))
+        else:
+            edge_colors = plt.cm.Reds([w / 4.0 for w in weights])
         nx.draw_networkx_edges(G, pos, edge_color=edge_colors, width=2.5, alpha=0.5, ax=ax)
 
         # Arêtes du plus court chemin (arbre)
         tree_edges = self._shortest_path_tree_edges(predecessors, start_node)
-        edgelist_tree = [(u, v) for u, v in G.edges() if (u, v) in tree_edges or (v, u) in tree_edges]
+        edgelist_tree = [
+            (u, v) for u, v in G.edges() if (u, v) in tree_edges or (v, u) in tree_edges
+        ]
         if edgelist_tree:
-            nx.draw_networkx_edges(G, pos, edgelist=edgelist_tree, edge_color="blue", width=5, alpha=0.9, ax=ax)
+            nx.draw_networkx_edges(
+                G, pos, edgelist=edgelist_tree, edge_color="blue", width=5, alpha=0.9, ax=ax
+            )
 
-        # Poids sur les arêtes (pour vérification manuelle) — répartis pour limiter les chevauchements
+        # Poids sur les arêtes (afficher la valeur réelle, ex. -1 pour cas contrôlé)
         edge_list = list(G.edges())
-        edge_labels = {(u, v): str(G[u][v]["weight"]) for u, v in edge_list}
-        for edges_sub, label_pos in [(edge_list[0::3], 0.25), (edge_list[1::3], 0.5), (edge_list[2::3], 0.75)]:
+        edge_labels = {}
+        for u, v in edge_list:
+            w = G[u][v]["weight"]
+            edge_labels[(u, v)] = str(int(w)) if w == int(w) else str(w)
+        for edges_sub, label_pos in [
+            (edge_list[0::3], 0.25),
+            (edge_list[1::3], 0.5),
+            (edge_list[2::3], 0.75),
+        ]:
             sub_labels = {e: edge_labels[e] for e in edges_sub if e in edge_labels}
             if sub_labels:
-                nx.draw_networkx_edge_labels(G, pos, sub_labels, font_size=10, label_pos=label_pos, ax=ax,
-                                             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85))
+                nx.draw_networkx_edge_labels(
+                    G,
+                    pos,
+                    sub_labels,
+                    font_size=10,
+                    label_pos=label_pos,
+                    ax=ax,
+                    bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85),
+                )
 
-        # Nœuds avec couleur selon la distance
+        # Nœuds avec couleur selon la distance (gérer distances négatives si cycle)
         nodes_in_tree = set()
         for u, v in tree_edges:
             nodes_in_tree.add(u)
             nodes_in_tree.add(v)
-        max_d = max((d for d in distances.values() if d != float("inf")), default=0)
+        finite_d = [d for d in distances.values() if d != float("inf")]
+        min_d = min(finite_d, default=0)
+        max_d = max(finite_d, default=1)
         node_colors = []
         node_list = list(G.nodes())
         for n in node_list:
             if n not in distances or distances[n] == float("inf"):
                 node_colors.append((0.9, 0.9, 0.9, 0.8))
             else:
-                r = distances[n] / max(max_d, 1)
+                d = distances[n]
+                span = max_d - min_d
+                r = (d - min_d) / span if span > 0 else 0.5
+                r = max(0.0, min(1.0, r))
                 node_colors.append(plt.cm.viridis(r))
-        nx.draw_networkx_nodes(G, pos, nodelist=node_list, node_color=node_colors, node_size=600, alpha=0.9, ax=ax, edgecolors="black", linewidths=2)
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=node_list,
+            node_color=node_colors,
+            node_size=600,
+            alpha=0.9,
+            ax=ax,
+            edgecolors="black",
+            linewidths=2,
+        )
         # Source en rouge pour contraster avec les bleus/verts
-        nx.draw_networkx_nodes(G, pos, nodelist=[start_node], node_color="red", node_size=800, alpha=1.0, ax=ax, edgecolors="darkred", linewidths=4)
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=[start_node],
+            node_color="red",
+            node_size=800,
+            alpha=1.0,
+            ax=ax,
+            edgecolors="darkred",
+            linewidths=4,
+        )
 
         labels = {node: str(node) for node in G.nodes()}
         nx.draw_networkx_labels(G, pos, labels, font_size=10, ax=ax)
 
         title = f"Bellman-Ford - Source: Station {start_node}\n"
-        title += f"Plus courts chemins vers tous les nœuds"
+        title += "Plus courts chemins vers tous les nœuds"
         if has_negative_cycle:
             title += " (cycle négatif détecté!)"
         ax.set_title(title, fontsize=16, fontweight="bold", pad=20)
         ax.axis("off")
 
         from matplotlib.patches import Patch
+
         legend_elements = [
             Patch(facecolor="red", label=f"Source ({start_node})"),
             Patch(facecolor="steelblue", label="Nœuds (couleur = distance)"),
             Patch(facecolor="blue", edgecolor="blue", label="Arêtes des PCC"),
         ]
         if interactive:
-            ax.legend(handles=legend_elements, loc="upper left", fontsize=10, bbox_to_anchor=(1.02, 1))
+            ax.legend(
+                handles=legend_elements, loc="upper left", fontsize=10, bbox_to_anchor=(1.02, 1)
+            )
         else:
             ax.legend(handles=legend_elements, loc="upper right", fontsize=10)
 
-        sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis, norm=plt.Normalize(vmin=0, vmax=max_d))
+        sm = plt.cm.ScalarMappable(
+            cmap=plt.cm.viridis,
+            norm=plt.Normalize(vmin=min_d, vmax=max(max_d, min_d + 1e-6)),
+        )
         sm.set_array([])
         cbar = plt.colorbar(sm, ax=ax, orientation="vertical", fraction=0.02, pad=0.04)
         cbar.set_label("Distance depuis la source", rotation=270, labelpad=20)
