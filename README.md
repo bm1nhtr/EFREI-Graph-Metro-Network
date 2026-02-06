@@ -94,7 +94,7 @@ python interface/gui.py
 ```
 
 Ou option **10** dans le menu de `main.py`.  
-La GUI permet d’afficher le graphe (zoom, pan), de choisir la station de départ (0–18) et de lancer chaque algorithme. Une option **« Poids négatif (Bellman) »** permet d’afficher le graphe cas contrôlé à droite ; lorsque vous sélectionnez Bellman-Ford, ce graphe est utilisé automatiquement.
+La GUI permet d’afficher le graphe (zoom, pan), de choisir la station de départ (0–18) et de lancer chaque algorithme : Bellman-Ford, Dijkstra, Floyd-Warshall (matrice toutes paires), Prim, Kruskal, BFS, DFS. Une option **« Poids négatif (Bellman) »** permet d’afficher le graphe cas contrôlé à droite ; lorsque vous sélectionnez Bellman-Ford, ce graphe est utilisé automatiquement.
 
 ### Serveur Web
 
@@ -108,8 +108,8 @@ python interface/app.py
 
 Deux onglets accessibles via la barre de navigation sous le titre :
 
-- **Résultat** (`/`) : visualisations en image (graphe métro, BFS, DFS, Prim, Kruskal, Dijkstra, Bellman-Ford). Choisissez la station de départ et un algorithme ; la colonne de droite affiche le réseau métro (Normal ou Poids négatif pour Bellman).
-- **Étape par étape** (`/steps`) : pour chaque algorithme (BFS, DFS, Dijkstra, Bellman-Ford, Prim, Kruskal), affichage pas à pas avec **Précédent** / **Suivant**. Le graphe utilise le même placement que la visualisation « Résultat » (layout type réseau métro).
+- **Résultat** (`/`) : visualisations en image (graphe métro, BFS, DFS, Prim, Kruskal, Dijkstra, Bellman-Ford, **Floyd-Warshall**). Choisissez la station de départ et un algorithme ; la colonne de droite affiche le réseau métro (Normal ou Poids négatif pour Bellman). Floyd-Warshall affiche la matrice des distances (toutes paires) et la station la plus centrale.
+- **Étape par étape** (`/steps`) : pour chaque algorithme (BFS, DFS, Dijkstra, Bellman-Ford, Floyd-Warshall, Prim, Kruskal), affichage pas à pas avec **Précédent** / **Suivant**. Pour les parcours et PCC/MST : graphe avec le même placement que « Résultat ». Pour Floyd-Warshall : affichage de la matrice des distances à chaque étape (intermédiaire k).
 
 API optionnelle : `GET /api/steps/<algo>?start=10` retourne les étapes en JSON (graphe + positions des nœuds + liste d’étapes).
 

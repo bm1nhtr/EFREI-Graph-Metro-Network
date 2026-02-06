@@ -9,6 +9,8 @@ LAYOUT_METRO_GUI = dict(left=0.062, bottom=0, right=0.70, top=0.886, wspace=0.21
 # Layout pour l'arbre BFS (format vertical)
 LAYOUT_ARBRE = dict(left=0.036, bottom=0.05, right=0.676, top=0.829, wspace=0.217, hspace=0.217)
 LAYOUT_ARBRE_GUI = dict(left=0.036, bottom=0.05, right=0.676, top=0.829, wspace=0.217, hspace=0.217)
+# Layout pour Floyd-Warshall (matrice) en mode GUI
+LAYOUT_FLOYD_GUI = dict(left=0.062, bottom=0.107, right=0.7, top=0.886, wspace=0.217, hspace=0.217)
 
 
 def standardize_path(path):

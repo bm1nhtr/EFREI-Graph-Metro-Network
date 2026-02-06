@@ -22,6 +22,7 @@ from algorithms.bellman_ford import BellmanFord
 from algorithms.bfs import BFS
 from algorithms.dfs import DFS
 from algorithms.dijkstra import Dijkstra
+from algorithms.floyd_warshall import FloydWarshall
 from algorithms.kruskal import Kruskal
 from algorithms.prim import Prim
 from algorithms.utils import load_graph_data
@@ -89,6 +90,9 @@ class MetroGraphApp:
             fill=tk.X, pady=2
         )
         ttk.Button(left, text="Dijkstra (PCC)", command=self.show_dijkstra).pack(fill=tk.X, pady=2)
+        ttk.Button(left, text="Floyd-Warshall (toutes paires)", command=self.show_floyd_warshall).pack(
+            fill=tk.X, pady=2
+        )
         ttk.Label(left, text="MST (arbre couvrant min.):", font=("", 10, "bold")).pack(
             anchor=tk.W, pady=(8, 2)
         )
@@ -211,6 +215,13 @@ class MetroGraphApp:
         kr = Kruskal(self.graph_data)
         mst_edges, total_weight = kr.kruskal_mst(start_node=start)
         kr.visualiser_mst(mst_edges, total_weight, start_node=start, fig=self.fig)
+        self.canvas.draw()
+
+    def show_floyd_warshall(self):
+        """Affiche la matrice des distances (toutes paires) et la station la plus centrale."""
+        fw = FloydWarshall(self.graph_data)
+        dist = fw.floyd_warshall()
+        fw.visualiser_matrice(dist, fig=self.fig)
         self.canvas.draw()
 
     def run(self):

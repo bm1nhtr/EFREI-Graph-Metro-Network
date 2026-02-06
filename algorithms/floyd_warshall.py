@@ -9,7 +9,7 @@ import os
 
 import numpy as np
 
-from algorithms.utils import standardize_path
+from algorithms.utils import LAYOUT_FLOYD_GUI, standardize_path
 
 
 class FloydWarshall:
@@ -233,6 +233,8 @@ class FloydWarshall:
         )
         plt.colorbar(im, ax=ax, label="Distance (min)")
 
+        if interactive:
+            fig.subplots_adjust(**LAYOUT_FLOYD_GUI)
         if not interactive:
             results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "FLOYD_WARSHALL")
             os.makedirs(results_dir, exist_ok=True)
