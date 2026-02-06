@@ -28,10 +28,31 @@
 
     .page-title {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 12px;
       padding: 16px 24px;
       font-size: 1.5rem;
       letter-spacing: 0.02em;
+    }
+    .main-nav {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 24px;
+      padding: 0 16px;
+    }
+    .main-nav-link {
+      padding: 12px 28px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .main-nav-link:hover { color: #fff; }
+    .main-nav-link.active {
+      color: #fff;
+      border-bottom-color: #7dd3fc;
     }
 
     .grid {
@@ -209,6 +230,10 @@
 </head>
 <body>
   <h1 class="page-title glass">Réseau Métro (19 stations)</h1>
+  <nav class="main-nav glass" aria-label="Navigation principale">
+    <a href="/" class="main-nav-link active">Résultat</a>
+    <a href="/steps" class="main-nav-link">Étape par étape</a>
+  </nav>
 
   {% if not graph_available %}
   <div class="alert-missing-data glass" role="alert">
@@ -233,6 +258,7 @@
         <!-- PCC -->
         <button type="button" data-algo="bellman_ford">Bellman-Ford (PCC)</button>
         <button type="button" data-algo="dijkstra">Dijkstra (PCC)</button>
+        <button type="button" data-algo="floyd_warshall">Floyd-Warshall (toutes paires)</button>
         <span class="algo-sep" aria-hidden="true"></span>
         <!-- MST -->
         <button type="button" data-algo="prim">Prim (MST)</button>
@@ -334,8 +360,11 @@
       kruskal: {
         desc: "L’algorithme de Kruskal construit un arbre couvrant de poids minimum (MST) en ajoutant les arêtes par poids croissant sans créer de cycle.",
         url: "https://fr.wikipedia.org/wiki/Algorithme_de_Kruskal"
+      },
+      floyd_warshall: {
+        desc: "Floyd-Warshall calcule les plus courts chemins entre toutes les paires de nœuds. Matrice des distances et station la plus centrale (somme ou excentricité).",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_Floyd-Warshall"
       }
-
     };
 
     function getUrl(algo) {

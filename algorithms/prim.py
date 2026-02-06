@@ -84,6 +84,54 @@ class Prim:
 
         return mst_edges, total_weight
 
+    def prim_mst_steps(self, start_node: int):
+        """Prim étape par étape : yield à chaque arête ajoutée au MST (pour visualisation web)."""
+        start_node = int(start_node)
+        in_mst = {start_node}
+        mst_edges = []
+        total_weight = 0.0
+        candidates = []
+        for v, w in self.get_neighbors_with_weights(start_node):
+            candidates.append((w, start_node, v))
+
+        step_index = 0
+        yield {
+            "step_index": step_index,
+            "description": f"Départ : nœud {start_node} dans le MST. Arêtes candidates depuis {start_node}.",
+            "mst_edges": [],
+            "total_weight": 0,
+            "in_mst": [start_node],
+        }
+        step_index += 1
+
+        while candidates:
+            candidates.sort(key=lambda x: x[0])
+            w, u, v = candidates.pop(0)
+            if v in in_mst:
+                continue
+            in_mst.add(v)
+            mst_edges.append((u, v, w))
+            total_weight += w
+            for neighbor, nw in self.get_neighbors_with_weights(v):
+                if neighbor not in in_mst:
+                    candidates.append((nw, v, neighbor))
+            yield {
+                "step_index": step_index,
+                "description": f"Arête ({u}, {v}) de poids {w} ajoutée. Poids total = {total_weight}.",
+                "mst_edges": [[a, b, c] for a, b, c in mst_edges],
+                "total_weight": total_weight,
+                "in_mst": list(in_mst),
+            }
+            step_index += 1
+
+        yield {
+            "step_index": step_index,
+            "description": f"Fin. MST avec {len(mst_edges)} arêtes, poids total = {total_weight}.",
+            "mst_edges": [[a, b, c] for a, b, c in mst_edges],
+            "total_weight": total_weight,
+            "in_mst": list(in_mst),
+        }
+
     def sauvegarder_resultats(self, mst_edges, total_weight, file_name="prim_result.txt"):
         """Sauvegarde les résultats du MST (arêtes et poids total).
         Args:

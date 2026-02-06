@@ -75,6 +75,64 @@ class BellmanFord:
 
         return distances, predecessors, has_negative_cycle
 
+    def bellman_ford_steps(self, start_node: int):
+        """Bellman-Ford étape par étape : yield après chaque phase de relaxation (pour visualisation web)."""
+        start_node = int(start_node)
+        nodes = self.get_nodes()
+        edges = self.get_directed_edges()
+        distances = {n: float("inf") for n in nodes}
+        predecessors = {n: [] for n in nodes}
+        distances[start_node] = 0
+
+        def dist_repr(d):
+            return int(d) if d != float("inf") else "inf"
+
+        step_index = 0
+        yield {
+            "step_index": step_index,
+            "description": f"Initialisation : source = {start_node}, distances[{start_node}] = 0.",
+            "distances": {k: dist_repr(v) for k, v in distances.items()},
+            "predecessors": {k: list(v) for k, v in predecessors.items()},
+            "phase": 0,
+        }
+        step_index += 1
+
+        for phase in range(1, len(nodes)):
+            updated = False
+            for u, v, w in edges:
+                if distances[u] == float("inf"):
+                    continue
+                d_new = distances[u] + w
+                if d_new < distances[v]:
+                    distances[v] = d_new
+                    predecessors[v] = [u]
+                    updated = True
+                elif d_new == distances[v] and u not in predecessors[v]:
+                    predecessors[v].append(u)
+                    updated = True
+            yield {
+                "step_index": step_index,
+                "description": f"Phase {phase} : relaxation de toutes les arêtes. Distances mises à jour = {updated}.",
+                "distances": {k: dist_repr(v) for k, v in distances.items()},
+                "predecessors": {k: list(v) for k, v in predecessors.items()},
+                "phase": phase,
+            }
+            step_index += 1
+
+        has_negative_cycle = False
+        for u, v, w in edges:
+            if distances[u] != float("inf") and distances[u] + w < distances[v]:
+                has_negative_cycle = True
+                break
+        yield {
+            "step_index": step_index,
+            "description": "Détection cycle négatif : " + ("oui, cycle détecté." if has_negative_cycle else "non."),
+            "distances": {k: dist_repr(v) for k, v in distances.items()},
+            "predecessors": {k: list(v) for k, v in predecessors.items()},
+            "phase": len(nodes) - 1,
+            "has_negative_cycle": has_negative_cycle,
+        }
+
     def get_shortest_path(
         self, predecessors, start_node: int, end_node: int, pred_index: int = 0, max_steps: int = 50
     ):

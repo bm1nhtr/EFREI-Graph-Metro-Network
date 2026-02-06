@@ -65,6 +65,46 @@ class BFS:
 
         return result
 
+    def parcourir_bfs_steps(self, start_node: int):
+        """BFS étape par étape : yield un dict par nœud visité (pour visualisation web)."""
+        start_node = int(start_node)
+        visited = set()
+        queue = [start_node]
+        result = []
+        step_index = 0
+        # Step 0: initialisation
+        yield {
+            "step_index": step_index,
+            "description": f"Départ : file = [{start_node}], visités = []",
+            "visited": [],
+            "queue": [start_node],
+            "current_node": None,
+        }
+        step_index += 1
+        while queue:
+            node = queue.pop(0)
+            if node not in visited:
+                visited.add(node)
+                result.append(int(node))
+                neighbors = self.get_neighbors(node)
+                queue.extend(neighbors - visited)
+                yield {
+                    "step_index": step_index,
+                    "description": f"Nœud {node} visité. Voisins ajoutés à la file : {sorted(neighbors - visited) or '(aucun)'}. File = {list(queue)}",
+                    "visited": list(result),
+                    "queue": list(queue),
+                    "current_node": node,
+                }
+                step_index += 1
+        # Step final
+        yield {
+            "step_index": step_index,
+            "description": f"Fin. Ordre de visite : {' → '.join(map(str, result))}",
+            "visited": list(result),
+            "queue": [],
+            "current_node": None,
+        }
+
     def sauvegarder_resultats(self, parcours, file_name="bfs_result.txt"):
         """Sauvegarder les résultats du parcours BFS dans un fichier texte.
 

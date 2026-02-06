@@ -27,8 +27,11 @@ from algorithms.dfs import DFS
 from algorithms.dijkstra import Dijkstra
 from algorithms.kruskal import Kruskal
 from algorithms.prim import Prim
+from algorithms.floyd_warshall import FloydWarshall
 from algorithms.utils import load_graph_data
 from algorithms.visualize_metro import visualize_metro_network
+
+import networkx as nx
 
 app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), "templates"))
 app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
@@ -83,6 +86,16 @@ def index():
     )
 
 
+@app.route("/steps")
+def steps_page():
+    """Page visualisation étape par étape des algorithmes."""
+    return render_template(
+        "steps.html",
+        n_stations=N_STATIONS,
+        graph_available=get_graph_data() is not None,
+    )
+
+
 @app.route("/api/graph")
 def api_graph():
     """Retourne le graphe en JSON (nœuds et arêtes) pour usage frontend optionnel."""
@@ -97,6 +110,124 @@ def api_graph():
         nodes.add(v)
         edges.append({"from": u, "to": v, "weight": w})
     return {"nodes": sorted(nodes), "edges": edges}
+
+
+def _graph_to_json(data):
+    """Construit le dict nodes/edges à partir des données graphe."""
+    nodes = set()
+    edges = []
+    for row in data:
+        u, v, w = int(row[0]), int(row[1]), float(row[2])
+        nodes.add(u)
+        nodes.add(v)
+        edges.append({"from": u, "to": v, "weight": w})
+    return {"nodes": sorted(nodes), "edges": edges}
+
+
+def _graph_positions_spring(data, width=500, height=450, margin=50):
+    """
+    Calcule les positions des nœuds avec le même layout que metro_network_visualization
+    (spring_layout k=2, iterations=50, seed=42). Retourne dict node_id -> [x, y] en pixels.
+    """
+    G = nx.Graph()
+    for row in data:
+        u, v, w = int(row[0]), int(row[1]), float(row[2])
+        G.add_edge(u, v, weight=w)
+    pos = nx.spring_layout(G, k=2, iterations=50, seed=42)
+    xs = [pos[n][0] for n in pos]
+    ys = [pos[n][1] for n in pos]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    range_x = max_x - min_x or 1
+    range_y = max_y - min_y or 1
+    out = {}
+    for n in pos:
+        x = (pos[n][0] - min_x) / range_x * (width - 2 * margin) + margin
+        y = (pos[n][1] - min_y) / range_y * (height - 2 * margin) + margin
+        out[str(n)] = [round(x, 2), round(y, 2)]
+    return out
+
+
+@app.route("/api/steps/<algo>")
+def api_steps(algo):
+    """Retourne les étapes de l'algorithme pour la visualisation pas à pas (JSON)."""
+    start = request.args.get("start", type=int, default=10)
+    if start is None or start < 0 or start >= N_STATIONS:
+        start = 10
+    data = get_graph_data()
+    if algo == "bellman_ford":
+        data_bf = get_bellman_graph_data()
+        if data_bf is not None:
+            data = data_bf
+    if data is None:
+        return {"error": "Graphe non trouvé."}, 404
+
+    steps = []
+    try:
+        if algo == "bfs":
+            bfs = BFS(data)
+            steps = list(bfs.parcourir_bfs_steps(start_node=start))
+        elif algo == "dfs":
+            dfs = DFS(data)
+            steps = list(dfs.parcourir_dfs_steps(start_node=start))
+        elif algo == "dijkstra":
+            dj = Dijkstra(data)
+            steps = list(dj.dijkstra_steps(start_node=start))
+        elif algo == "bellman_ford":
+            bf = BellmanFord(data)
+            steps = list(bf.bellman_ford_steps(start_node=start))
+        elif algo == "prim":
+            prim = Prim(data)
+            steps = list(prim.prim_mst_steps(start_node=start))
+        elif algo == "kruskal":
+            kr = Kruskal(data)
+            steps = list(kr.kruskal_mst_steps(start_node=start))
+        elif algo == "floyd_warshall":
+            fw = FloydWarshall(data)
+            steps = list(fw.floyd_warshall_steps())
+        else:
+            return {"error": f"Algorithme inconnu: {algo}"}, 404
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+    # Sérialiser les steps (clés numériques et types JSON-safe)
+    steps_json = []
+    for s in steps:
+        step = {"step_index": s["step_index"], "description": s["description"]}
+        if "visited" in s:
+            step["visited"] = s["visited"]
+        if "queue" in s:
+            step["queue"] = s["queue"]
+        if "stack" in s:
+            step["stack"] = s["stack"]
+        if "current_node" in s:
+            step["current_node"] = s["current_node"]
+        if "distances" in s:
+            step["distances"] = s["distances"]
+        if "predecessors" in s:
+            pred = s["predecessors"]
+            step["predecessors"] = {str(k): (v if isinstance(v, list) else [v] if v is not None else []) for k, v in pred.items()}
+        if "mst_edges" in s:
+            step["mst_edges"] = s["mst_edges"]
+        if "total_weight" in s:
+            step["total_weight"] = s["total_weight"]
+        if "phase" in s:
+            step["phase"] = s["phase"]
+        if "has_negative_cycle" in s:
+            step["has_negative_cycle"] = s["has_negative_cycle"]
+        if "matrix" in s:
+            step["matrix"] = s["matrix"]
+        if "k" in s:
+            step["k"] = s["k"]
+        if "centrale_somme" in s:
+            step["centrale_somme"] = s["centrale_somme"]
+        if "centrale_excentricite" in s:
+            step["centrale_excentricite"] = s["centrale_excentricite"]
+        steps_json.append(step)
+
+    graph = _graph_to_json(data)
+    graph["positions"] = _graph_positions_spring(data)
+    return {"graph": graph, "steps": steps_json, "start_node": start, "algo": algo}
 
 
 def _fig_to_png(fig, dpi=150):
@@ -287,6 +418,21 @@ def api_visualize_kruskal():
     fig = Figure(figsize=(12, 9))
     kr.visualiser_mst(mst_edges, total_weight, start_node=start, fig=fig)
 
+    buf = _fig_to_png(fig)
+    plt.close(fig)
+    return send_file(buf, mimetype="image/png")
+
+
+@app.route("/api/visualize/floyd_warshall")
+def api_visualize_floyd_warshall():
+    """Matrice des distances (toutes paires) + analyse centrale."""
+    data = get_graph_data()
+    if data is None:
+        return "Graphe non trouvé.", 404
+    fw = FloydWarshall(data)
+    dist = fw.floyd_warshall()
+    fig = Figure(figsize=(12, 9))
+    fw.visualiser_matrice(dist, fig=fig)
     buf = _fig_to_png(fig)
     plt.close(fig)
     return send_file(buf, mimetype="image/png")
