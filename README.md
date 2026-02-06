@@ -42,10 +42,11 @@ ProjetGraph/
 │   ├── bellman_ford.py          # Bellman-Ford (plus courts chemins)
 │   └── floyd_warshall.py        # Floyd-Warshall (plus courts chemins)
 ├── interface/                   # Interfaces utilisateur (web + desktop)
-│   ├── app.py                   # Serveur web Flask
+│   ├── app.py                   # Serveur web Flask (API + routes)
 │   ├── gui.py                   # Interface graphique desktop (Tkinter)
 │   └── templates/
-│       └── index.html           # Page web (visualisations)
+│       ├── index.html           # Page « Résultat » (visualisations PNG)
+│       └── steps.html           # Page « Étape par étape » (graphe + étapes)
 └── results/                     # Résultats et visualisations
     ├── BFS/, DFS/, PRIM/, KRUSKAL/
     ├── DIJKSTRA/, BELLMAN_FORD/, FLOYD_WARSHALL/
@@ -105,7 +106,12 @@ python interface/app.py
 - **Local :** http://localhost:5000  
 - **Réseau local :** http://\<IP_DE_LA_MACHINE\>:5000  
 
-La page permet de choisir la visualisation (graphe métro, BFS, DFS, Prim, Kruskal, Dijkstra, Bellman-Ford) et la station de départ. La colonne de droite affiche le **réseau métro** : vous pouvez basculer entre **Normal** et **Poids négatif (Bellman)** ; si vous cliquez sur Bellman-Ford, le graphe à droite passe automatiquement à la variante avec poids négatif.
+Deux onglets accessibles via la barre de navigation sous le titre :
+
+- **Résultat** (`/`) : visualisations en image (graphe métro, BFS, DFS, Prim, Kruskal, Dijkstra, Bellman-Ford). Choisissez la station de départ et un algorithme ; la colonne de droite affiche le réseau métro (Normal ou Poids négatif pour Bellman).
+- **Étape par étape** (`/steps`) : pour chaque algorithme (BFS, DFS, Dijkstra, Bellman-Ford, Prim, Kruskal), affichage pas à pas avec **Précédent** / **Suivant**. Le graphe utilise le même placement que la visualisation « Résultat » (layout type réseau métro).
+
+API optionnelle : `GET /api/steps/<algo>?start=10` retourne les étapes en JSON (graphe + positions des nœuds + liste d’étapes).
 
 ## Développement (optionnel)
 

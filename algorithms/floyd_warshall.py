@@ -58,6 +58,57 @@ class FloydWarshall:
         self.dist = dist
         return dist
 
+    def floyd_warshall_steps(self):
+        """Floyd-Warshall étape par étape : yield la matrice après chaque k (pour visualisation web)."""
+        n = self.n
+        inf = float("inf")
+        dist = np.full((n, n), inf)
+        np.fill_diagonal(dist, 0)
+        for edge in self.graph_data:
+            u, v, w = int(edge[0]), int(edge[1]), float(edge[2])
+            dist[u, v] = min(dist[u, v], w)
+            dist[v, u] = min(dist[v, u], w)
+
+        def matrix_to_list(d):
+            return [
+                [int(d[i, j]) if d[i, j] != inf else "inf" for j in range(n)]
+                for i in range(n)
+            ]
+
+        step_index = 0
+        yield {
+            "step_index": step_index,
+            "description": "Matrice initiale : arêtes directes (poids), reste = inf.",
+            "matrix": matrix_to_list(dist),
+            "k": -1,
+        }
+        step_index += 1
+
+        for k in range(n):
+            for i in range(n):
+                for j in range(n):
+                    if dist[i, k] != inf and dist[k, j] != inf:
+                        dist[i, j] = min(dist[i, j], dist[i, k] + dist[k, j])
+            yield {
+                "step_index": step_index,
+                "description": f"Après k = {k} : chemins passant par la station {k} autorisés.",
+                "matrix": matrix_to_list(dist.copy()),
+                "k": k,
+            }
+            step_index += 1
+
+        analysis = self.analyse_centrale(dist)
+        st_somme, val_somme = analysis["centrale_somme"]
+        st_exc, val_exc = analysis["centrale_excentricite"]
+        yield {
+            "step_index": step_index,
+            "description": f"Fin. Station centrale (somme): {st_somme} ; (excentricité): {st_exc}.",
+            "matrix": matrix_to_list(dist),
+            "k": n - 1,
+            "centrale_somme": st_somme,
+            "centrale_excentricite": st_exc,
+        }
+
     def analyse_centrale(self, dist: np.ndarray) -> dict:
         """
         Analyse simple : station la plus "centrale".

@@ -79,6 +79,55 @@ class Dijkstra:
 
         return distances, predecessors
 
+    def dijkstra_steps(self, start_node: int):
+        """Dijkstra étape par étape : yield à chaque extraction de nœud (pour visualisation web)."""
+        start_node = int(start_node)
+        nodes = self.get_nodes()
+        distances = {n: float("inf") for n in nodes}
+        predecessors = {n: None for n in nodes}
+        distances[start_node] = 0
+        priority_queue = [(0, start_node)]
+        step_index = 0
+
+        def dist_repr(d):
+            return int(d) if d != float("inf") else "inf"
+
+        yield {
+            "step_index": step_index,
+            "description": f"Initialisation : source = {start_node}, distances[{start_node}] = 0.",
+            "distances": {k: dist_repr(v) for k, v in distances.items()},
+            "predecessors": {k: v for k, v in predecessors.items()},
+            "current_node": None,
+        }
+        step_index += 1
+
+        while priority_queue:
+            current_dist, current_node = heapq.heappop(priority_queue)
+            if current_dist > distances[current_node]:
+                continue
+            for neighbor, weight in self.get_neighbors_with_weights(current_node):
+                new_dist = current_dist + weight
+                if new_dist < distances[neighbor]:
+                    distances[neighbor] = new_dist
+                    predecessors[neighbor] = current_node
+                    heapq.heappush(priority_queue, (new_dist, neighbor))
+            yield {
+                "step_index": step_index,
+                "description": f"Nœud {current_node} extrait (dist = {dist_repr(distances[current_node])}). Relaxation des voisins.",
+                "distances": {k: dist_repr(v) for k, v in distances.items()},
+                "predecessors": {k: v for k, v in predecessors.items()},
+                "current_node": current_node,
+            }
+            step_index += 1
+
+        yield {
+            "step_index": step_index,
+            "description": "Fin. Plus courts chemins calculés depuis la source.",
+            "distances": {k: dist_repr(v) for k, v in distances.items()},
+            "predecessors": {k: v for k, v in predecessors.items()},
+            "current_node": None,
+        }
+
     def _get_shortest_path(self, predecessors, start_node: int, end_node: int):
         """Reconstruit l'unique plus court chemin (source -> noeud) pour Dijkstra."""
         if end_node == start_node:

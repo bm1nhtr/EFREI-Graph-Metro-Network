@@ -93,6 +93,48 @@ class Kruskal:
 
         return mst_edges, total_weight
 
+    def kruskal_mst_steps(self, start_node: int):
+        """Kruskal étape par étape : yield à chaque arête ajoutée au MST (pour visualisation web)."""
+        edges = self.get_edges_with_weights()
+        edges.sort(key=lambda x: x[2])
+        nodes = set()
+        for u, v, _ in edges:
+            nodes.add(u)
+            nodes.add(v)
+        parent = {node: node for node in nodes}
+        rank = {node: 0 for node in nodes}
+        mst_edges = []
+        total_weight = 0.0
+
+        step_index = 0
+        yield {
+            "step_index": step_index,
+            "description": "Arêtes triées par poids croissant. Union-Find initialisé.",
+            "mst_edges": [],
+            "total_weight": 0,
+        }
+        step_index += 1
+
+        for u, v, w in edges:
+            if self.find(parent, u) != self.find(parent, v):
+                self.union(parent, rank, u, v)
+                mst_edges.append((u, v, w))
+                total_weight += w
+                yield {
+                    "step_index": step_index,
+                    "description": f"Arête ({u}, {v}) de poids {w} acceptée (pas de cycle). Poids total = {total_weight}.",
+                    "mst_edges": [[a, b, c] for a, b, c in mst_edges],
+                    "total_weight": total_weight,
+                }
+                step_index += 1
+
+        yield {
+            "step_index": step_index,
+            "description": f"Fin. MST avec {len(mst_edges)} arêtes, poids total = {total_weight}.",
+            "mst_edges": [[a, b, c] for a, b, c in mst_edges],
+            "total_weight": total_weight,
+        }
+
     def sauvegarder_resultats(self, mst_edges, total_weight, file_name="kruskal_result.txt"):
         """Sauvegarde les arêtes du MST et le poids total dans un fichier texte."""
         # Créer le dossier de résultats s’il n’existe pas

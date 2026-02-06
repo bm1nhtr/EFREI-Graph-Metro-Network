@@ -66,6 +66,48 @@ class DFS:
 
         return result, parent
 
+    def parcourir_dfs_steps(self, start_node: int):
+        """DFS étape par étape : yield un dict par nœud visité (pour visualisation web)."""
+        start_node = int(start_node)
+        visited = set()
+        stack = [start_node]
+        result = []
+        parent = {}
+        step_index = 0
+        yield {
+            "step_index": step_index,
+            "description": f"Départ : pile = [{start_node}], visités = []",
+            "visited": [],
+            "stack": [start_node],
+            "current_node": None,
+        }
+        step_index += 1
+        while stack:
+            node = stack.pop()
+            if node not in visited:
+                visited.add(node)
+                result.append(node)
+                neighbors = sorted(self.get_neighbors(node), reverse=True)
+                for neighbor in neighbors:
+                    if neighbor not in visited:
+                        parent[neighbor] = node
+                        stack.append(neighbor)
+                yield {
+                    "step_index": step_index,
+                    "description": f"Nœud {node} visité. Pile (sommet en dernier) = {list(stack)[-10:] if len(stack) > 10 else list(stack)}",
+                    "visited": list(result),
+                    "stack": list(stack),
+                    "current_node": node,
+                }
+                step_index += 1
+        yield {
+            "step_index": step_index,
+            "description": f"Fin. Ordre de visite : {' → '.join(map(str, result))}",
+            "visited": list(result),
+            "stack": [],
+            "current_node": None,
+        }
+
     def sauvegarder_resultats(self, parcours, file_name="dfs_result.txt"):
         """Sauvegarde l’ordre de visite du DFS dans un fichier texte."""
         # Créer le dossier de résultats s’il n’existe pas
