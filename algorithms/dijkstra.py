@@ -218,6 +218,15 @@ class Dijkstra:
                 G, pos, edgelist=edgelist_tree, edge_color="blue", width=5, alpha=0.9, ax=ax
             )
 
+        # Poids sur les arêtes (pour vérification manuelle) — répartis pour limiter les chevauchements
+        edge_list = list(G.edges())
+        edge_labels = {(u, v): str(G[u][v]["weight"]) for u, v in edge_list}
+        for edges_sub, label_pos in [(edge_list[0::3], 0.25), (edge_list[1::3], 0.5), (edge_list[2::3], 0.75)]:
+            sub_labels = {e: edge_labels[e] for e in edges_sub if e in edge_labels}
+            if sub_labels:
+                nx.draw_networkx_edge_labels(G, pos, sub_labels, font_size=10, label_pos=label_pos, ax=ax,
+                                             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85))
+
         # Coloration des nœuds selon la distance
         max_d = max((d for d in distances.values() if d != float("inf")), default=1)
         node_colors = []
@@ -297,3 +306,46 @@ class Dijkstra:
             plt.close()
 
         return fig
+
+
+
+    def somme_distances(self, start_node: int):
+        """
+        Calcule S(i) = somme des distances minimales
+        entre start_node et tous les autres nœuds.
+
+        Args:
+            start_node (int): nœud de départ
+
+        Returns:
+            float: somme des distances S(i)
+        """
+        distances, _ = self.dijkstra(start_node)
+
+        total = 0.0
+        for node, d in distances.items():
+            if node != start_node and d != float("inf"):
+                total += d
+
+        return total
+
+    
+    def somme_distances_tous_les_noeuds(self):
+        """
+        Calcule S(i) pour tous les nœuds du graphe.
+
+        Returns:
+            dict: {node: S(node)}
+        """
+        results = {}
+
+        nodes = set()
+        for edge in self.graph_data:
+            nodes.add(int(edge[0]))
+            nodes.add(int(edge[1]))
+
+        for node in nodes:
+            results[node] = self.somme_distances(node)
+
+        return results
+
