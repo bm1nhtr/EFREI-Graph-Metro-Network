@@ -25,9 +25,21 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PROJECT_ROOT)
 
 # Noeud de départ par défaut pour les algorithmes (0-18, 19 stations)
-DEFAULT_START_NODE = 10
+#DEFAULT_START_NODE = 10
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 NPY_FILE = os.path.join(DATA_DIR, "metro_network.npy")
+
+def ask_start_node():
+    """Demande une station de départ valide (0-18)."""
+    while True:
+        try:
+            value = int(input("Choisissez la station de départ (0-18) : "))
+            if 0 <= value <= 18:
+                return value
+            else:
+                print("Erreur : entrez un nombre entre 0 et 18.")
+        except ValueError:
+            print("Erreur : veuillez entrer un nombre valide.")
 
 
 def _ensure_graph_exists() -> bool:
@@ -156,6 +168,17 @@ def _run_floyd_warshall(graph_data) -> None:
     fw.visualiser_matrice(dist, file_name="floyd_warshall_visualization.png")
     print("Resultats et visualisation Floyd-Warshall sauvegardes dans results/FLOYD_WARSHALL/")
 
+def _run_stationt(graph_data)-> None :
+    dj = Dijkstra(graph_data)
+    centralites = dj.somme_distances_tous_les_noeuds()
+
+    print("\nSomme des distances S(i) pour chaque station :")
+    for node in sorted(centralites):
+        print(f"Station {node} : S(i) = {centralites[node]}")
+
+    best_station = min(centralites, key=centralites.get)
+    print(f"\nStation la plus centrale : {best_station}")
+
 
 def _run_gui() -> None:
     """Ouvre l'interface graphique desktop (Tkinter)."""
@@ -167,7 +190,7 @@ def _run_gui() -> None:
 
 def main() -> None:
     """Boucle principale : affiche le menu et exécute l'option choisie jusqu'à Quitter (0)."""
-    start_node = DEFAULT_START_NODE
+    start_node = ask_start_node()
     while True:
         print("=" * 70)
         print("PROJET GRAPH - RESEAU METRO")
@@ -181,10 +204,11 @@ def main() -> None:
         print("  6. Kruskal (MST)")
         print("  7. BFS sur le reseau metro")
         print("  8. DFS sur le reseau metro")
-        print("  9. Floyd-Warshall (toutes les paires + analyse centrale)")
-        print(" 10. Interface graphique (GUI desktop)")
+        print("  9.  Calculer la centralité de chaque station avec Dijkstra (S(i))")
+        print("  10. Floyd-Warshall (toutes les paires + analyse centrale)")
+        print(" 11. Interface graphique (GUI desktop)")
         print("  0. Quitter")
-        choice = input("\nVotre choix (0-10): ").strip()
+        choice = input("\nVotre choix (0-11): ").strip()
 
         if choice == "0":
             print("\nAu revoir!")
@@ -212,8 +236,9 @@ def main() -> None:
             "6": lambda: _run_kruskal(graph_data, start_node),
             "7": lambda: _run_bfs(graph_data, start_node),
             "8": lambda: _run_dfs(graph_data, start_node),
-            "9": lambda: _run_floyd_warshall(graph_data),
-            "10": _run_gui,
+            "9": lambda: _run_stationt(graph_data),
+            "10": lambda: _run_floyd_warshall(graph_data),
+            "11": _run_gui,
         }
         if choice == "2":
             print("\nVisualisation du reseau metro...")
