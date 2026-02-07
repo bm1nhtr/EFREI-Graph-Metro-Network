@@ -218,6 +218,15 @@ class Dijkstra:
                 G, pos, edgelist=edgelist_tree, edge_color="blue", width=5, alpha=0.9, ax=ax
             )
 
+        # Poids sur les arêtes (pour vérification manuelle) — répartis pour limiter les chevauchements
+        edge_list = list(G.edges())
+        edge_labels = {(u, v): str(G[u][v]["weight"]) for u, v in edge_list}
+        for edges_sub, label_pos in [(edge_list[0::3], 0.25), (edge_list[1::3], 0.5), (edge_list[2::3], 0.75)]:
+            sub_labels = {e: edge_labels[e] for e in edges_sub if e in edge_labels}
+            if sub_labels:
+                nx.draw_networkx_edge_labels(G, pos, sub_labels, font_size=10, label_pos=label_pos, ax=ax,
+                                             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85))
+
         # Coloration des nœuds selon la distance
         max_d = max((d for d in distances.values() if d != float("inf")), default=1)
         node_colors = []
