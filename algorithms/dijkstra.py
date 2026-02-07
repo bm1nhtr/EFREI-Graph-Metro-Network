@@ -297,3 +297,46 @@ class Dijkstra:
             plt.close()
 
         return fig
+
+
+
+    def somme_distances(self, start_node: int):
+        """
+        Calcule S(i) = somme des distances minimales
+        entre start_node et tous les autres nœuds.
+
+        Args:
+            start_node (int): nœud de départ
+
+        Returns:
+            float: somme des distances S(i)
+        """
+        distances, _ = self.dijkstra(start_node)
+
+        total = 0.0
+        for node, d in distances.items():
+            if node != start_node and d != float("inf"):
+                total += d
+
+        return total
+
+    
+    def somme_distances_tous_les_noeuds(self):
+        """
+        Calcule S(i) pour tous les nœuds du graphe.
+
+        Returns:
+            dict: {node: S(node)}
+        """
+        results = {}
+
+        nodes = set()
+        for edge in self.graph_data:
+            nodes.add(int(edge[0]))
+            nodes.add(int(edge[1]))
+
+        for node in nodes:
+            results[node] = self.somme_distances(node)
+
+        return results
+
