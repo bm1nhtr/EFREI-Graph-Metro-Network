@@ -6,7 +6,7 @@ Binh Minh TRAN - Marouane NOUARA
 **Démo en ligne (Render) :** [https://graph-metro-network.onrender.com/](https://graph-metro-network.onrender.com/)
 
 ## Description
-Ce projet implémente des algorithmes de graphes sur un **réseau de métro** modélisé en graphe non orienté : recherche du plus court chemin (Dijkstra, Bellman-Ford), parcours (BFS, DFS), arbre couvrant minimum (Prim, Kruskal). Le réseau contient 19 stations (0-18) réparties sur 3 lignes avec des stations de correspondance.
+Ce projet implémente des algorithmes de graphes sur un **réseau de métro** modélisé en graphe non orienté : plus courts chemins (Dijkstra, Bellman-Ford, Floyd-Warshall), parcours (BFS, DFS), arbre couvrant minimum (Prim, Kruskal). Le réseau contient 19 stations (0-18) réparties sur 3 lignes avec des stations de correspondance.
 
 **Données :** nous utilisons **notre propre dataset** — graphe thématique (réseau de transport). Le graphe est construit manuellement et disponible en plusieurs formats dans `data/` : JSON, CSV, TXT et NPY.
 
@@ -51,6 +51,7 @@ ProjetGraph/
     ├── BFS/, DFS/, PRIM/, KRUSKAL/
     ├── DIJKSTRA/, BELLMAN_FORD/, FLOYD_WARSHALL/
     ├── metro_network_visualization.png
+    ├── metro_network_bellman_visualization.png
     └── REFERENCE_GRAPHE_VERIFICATION.txt
 ```
 
@@ -64,6 +65,8 @@ ProjetGraph/
   - flask (pour l’interface web)
 
 ## Installation
+
+Toutes les commandes ci-dessous sont à exécuter depuis la **racine du projet** (`ProjetGraph/`).
 
 1. Installer les dépendances :
 

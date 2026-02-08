@@ -1,7 +1,8 @@
 """
-Algorithme de Dijkstra - Plus courts chemins depuis une source
-Fonctionne sur graphe pondéré à poids positifs.
-Sur le réseau métro : graphe non orienté.
+Algorithme de Dijkstra - Plus courts chemins depuis une source.
+
+Graphe pondéré à poids positifs (réseau métro non orienté).
+Implémentation avec file de priorité (heapq) : complexité O((V + E) log V).
 """
 
 import heapq
@@ -10,7 +11,13 @@ import os
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from algorithms.utils import LAYOUT_METRO, LAYOUT_METRO_GUI, standardize_path
+from algorithms.utils import (
+    EXPORT_DPI,
+    LAYOUT_METRO,
+    LAYOUT_METRO_GUI,
+    SAVEFIG_PNG_OPTIONS,
+    standardize_path,
+)
 
 
 class Dijkstra:
@@ -46,6 +53,7 @@ class Dijkstra:
     def dijkstra(self, start_node: int):
         """
         Calcule les plus courts chemins depuis start_node (Dijkstra).
+        Complexité : O((V + E) log V) avec file de priorité (tas binaire).
 
         Returns:
             tuple: (distances dict, predecessors dict).
@@ -80,7 +88,7 @@ class Dijkstra:
         return distances, predecessors
 
     def dijkstra_steps(self, start_node: int):
-        """Dijkstra étape par étape : yield à chaque extraction de nœud (pour visualisation web)."""
+        """Dijkstra étape par étape : yield à chaque extraction de nœud (pour visualisation web). Même complexité O((V+E) log V)."""
         start_node = int(start_node)
         nodes = self.get_nodes()
         distances = {n: float("inf") for n in nodes}
@@ -255,6 +263,26 @@ class Dijkstra:
         labels = {node: str(node) for node in G.nodes()}
         nx.draw_networkx_labels(G, pos, labels, font_size=10, ax=ax)
 
+        # Poids sur les arêtes (comme Prim, Kruskal, Bellman)
+        edge_list = list(G.edges())
+        edge_labels = {(u, v): str(G[u][v]["weight"]) for u, v in edge_list}
+        for edges_sub, label_pos in [
+            (edge_list[0::3], 0.25),
+            (edge_list[1::3], 0.5),
+            (edge_list[2::3], 0.75),
+        ]:
+            sub_labels = {e: edge_labels[e] for e in edges_sub if e in edge_labels}
+            if sub_labels:
+                nx.draw_networkx_edge_labels(
+                    G,
+                    pos,
+                    sub_labels,
+                    font_size=10,
+                    label_pos=label_pos,
+                    ax=ax,
+                    bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85),
+                )
+
         # Titre
         title = f"Dijkstra - Source: Station {start_node}\nPlus courts chemins"
         ax.set_title(title, fontsize=16, fontweight="bold", pad=20)
@@ -292,7 +320,7 @@ class Dijkstra:
             results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "DIJKSTRA")
             os.makedirs(results_dir, exist_ok=True)
             output_path = standardize_path(os.path.join(results_dir, file_name))
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+            plt.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
             print(f"[OK] Visualisation Dijkstra sauvegardée dans: {output_path}")
             plt.close()
 

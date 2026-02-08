@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Projet Graph - Réseau Métro - Application Web
-Permet d'accéder au projet depuis un navigateur (réseau local ou déploiement).
-Lancer depuis la racine du projet : python interface/app.py
+Projet Graph - Réseau Métro - Application Web (Flask).
+
+Pages : / (visualisations), /steps (étape par étape). API : /api/visualize/<algo>,
+/api/graph, etc. Lancer depuis la racine : python interface/app.py
 """
 
 import io
@@ -40,7 +41,7 @@ N_STATIONS = 19
 
 
 def get_graph_data():
-    """Charge le graphe depuis data/metro_network.npy. Retourne None si absent."""
+    """Charge le graphe depuis data/metro_network.npy. Retourne None si fichier absent."""
     try:
         return load_graph_data("metro_network.npy")
     except FileNotFoundError:
@@ -48,7 +49,7 @@ def get_graph_data():
 
 
 def get_bellman_graph_data():
-    """Graphe avec 1 poids négatif (option A). Retourne None si absent."""
+    """Graphe métro avec 1 poids négatif (option A - Bellman). Retourne None si absent."""
     try:
         return load_graph_data("metro_network_bellman.npy")
     except FileNotFoundError:
@@ -76,7 +77,7 @@ def get_reference_edges():
 
 @app.route("/")
 def index():
-    """Page d'accueil : choix de la visualisation et de la station de depart."""
+    """Page d'accueil : sélection algorithme, station de départ, affichage du graphe et de la référence."""
     return render_template(
         "index.html",
         n_stations=N_STATIONS,
@@ -88,7 +89,7 @@ def index():
 
 @app.route("/steps")
 def steps_page():
-    """Page visualisation étape par étape des algorithmes."""
+    """Page visualisation étape par étape (Précédent / Suivant) pour chaque algorithme."""
     return render_template(
         "steps.html",
         n_stations=N_STATIONS,
@@ -230,9 +231,9 @@ def api_steps(algo):
     return {"graph": graph, "steps": steps_json, "start_node": start, "algo": algo}
 
 
-def _fig_to_png(fig, dpi=150):
+def _fig_to_png(fig, dpi=100):
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=dpi)
+    fig.savefig(buf, format="png", dpi=dpi, pil_kwargs={"compress_level": 6})
     buf.seek(0)
     return buf
 
@@ -315,6 +316,23 @@ def api_visualize_prim():
     mst_edges, total_weight = prim.prim_mst(start_node=start)
     fig = Figure(figsize=(12, 9))
     prim.visualiser_mst(mst_edges, total_weight, start_node=start, fig=fig)
+    buf = _fig_to_png(fig)
+    plt.close(fig)
+    return send_file(buf, mimetype="image/png")
+
+
+@app.route("/api/visualize/prim_tree")
+def api_visualize_prim_tree():
+    start = request.args.get("start", type=int, default=10)
+    if start is None or start < 0 or start >= N_STATIONS:
+        start = 10
+    data = get_graph_data()
+    if data is None:
+        return "Graphe non trouvé.", 404
+    prim = Prim(data)
+    mst_edges, total_weight = prim.prim_mst(start_node=start)
+    fig = Figure(figsize=(14, 10))
+    prim.visualiser_arbre_mst(mst_edges, total_weight, start_node=start, fig=fig)
     buf = _fig_to_png(fig)
     plt.close(fig)
     return send_file(buf, mimetype="image/png")
@@ -418,6 +436,23 @@ def api_visualize_kruskal():
     fig = Figure(figsize=(12, 9))
     kr.visualiser_mst(mst_edges, total_weight, start_node=start, fig=fig)
 
+    buf = _fig_to_png(fig)
+    plt.close(fig)
+    return send_file(buf, mimetype="image/png")
+
+
+@app.route("/api/visualize/kruskal_tree")
+def api_visualize_kruskal_tree():
+    start = request.args.get("start", type=int, default=10)
+    if start is None or start < 0 or start >= N_STATIONS:
+        start = 10
+    data = get_graph_data()
+    if data is None:
+        return "Graphe non trouvé.", 404
+    kr = Kruskal(data)
+    mst_edges, total_weight = kr.kruskal_mst(start_node=start)
+    fig = Figure(figsize=(14, 10))
+    kr.visualiser_arbre_mst(mst_edges, total_weight, start_node=start, fig=fig)
     buf = _fig_to_png(fig)
     plt.close(fig)
     return send_file(buf, mimetype="image/png")

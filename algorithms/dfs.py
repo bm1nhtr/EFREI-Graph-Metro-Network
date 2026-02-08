@@ -1,15 +1,20 @@
-"""DFS (parcours en profondeur) sur le graphe reseau metro."""
+"""
+Parcours en profondeur (DFS) sur le graphe du réseau métro.
 
+Complexité : O(V + E). Espace : O(V).
+"""
 import os
 
 import matplotlib.pyplot as plt
 import networkx as nx
 
 from algorithms.utils import (
+    EXPORT_DPI,
     LAYOUT_ARBRE,
     LAYOUT_ARBRE_GUI,
     LAYOUT_METRO,
     LAYOUT_METRO_GUI,
+    SAVEFIG_PNG_OPTIONS,
     standardize_path,
 )
 
@@ -37,7 +42,7 @@ class DFS:
         return neighbors
 
     def parcourir_dfs(self, start_node: int):
-        """Effectue une recherche en profondeur à partir d’un nœud de départ."""
+        """Parcours (DFS). Complexité O(V+E). Retourne (ordre_visite, parent)."""
         # Initialiser le nœud de départ
         start_node = int(start_node)
 
@@ -67,7 +72,7 @@ class DFS:
         return result, parent
 
     def parcourir_dfs_steps(self, start_node: int):
-        """DFS étape par étape : yield un dict par nœud visité (pour visualisation web)."""
+        """DFS étape par étape : yield un dict par nœud visité (pour visualisation web). Même complexité O(V+E)."""
         start_node = int(start_node)
         visited = set()
         stack = [start_node]
@@ -286,7 +291,7 @@ class DFS:
             results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "DFS")
             os.makedirs(results_dir, exist_ok=True)
             output_path = standardize_path(os.path.join(results_dir, file_name))
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+            plt.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
             print(f"[OK] Visualisation DFS sauvegardée dans: {output_path}")
             plt.close()
 
@@ -482,7 +487,7 @@ class DFS:
             results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "DFS")
             os.makedirs(results_dir, exist_ok=True)
             output_path = standardize_path(os.path.join(results_dir, file_name))
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+            plt.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
             print(f"[OK] Visualisation arbre DFS sauvegardée dans: {output_path}")
             plt.close()
 

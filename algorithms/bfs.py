@@ -1,13 +1,20 @@
+"""
+Parcours en largeur (BFS) sur le graphe du réseau métro.
+
+Complexité : O(V + E). Espace : O(V).
+"""
 import os
 
 import matplotlib.pyplot as plt
 import networkx as nx
 
 from algorithms.utils import (
+    EXPORT_DPI,
     LAYOUT_ARBRE,
     LAYOUT_ARBRE_GUI,
     LAYOUT_METRO,
     LAYOUT_METRO_GUI,
+    SAVEFIG_PNG_OPTIONS,
     standardize_path,
 )
 
@@ -20,13 +27,7 @@ class BFS:
         self.graph_data = graph_data
 
     def get_neighbors(self, node: int):
-        """Retourne les voisins d'un nœud.
-        Args:
-            node (int): Nœud dont on veut trouver les voisins.
-
-        Returns:
-                set: Ensemble des voisins du nœud.
-        """
+        """Retourne les voisins du nœud. Complexité : O(E)."""
         neighbors = set()
         node = int(node)
         # Parcourir les arêtes pour trouver les voisins
@@ -42,11 +43,9 @@ class BFS:
 
     def parcourir_bfs(self, start_node: int):
         """
-        Effectuer une recherche en largeur (BFS) à partir d'un nœud de départ donné.
-        Args:
-            start_node (int): Le nœud de départ pour la recherche BFS.
+        Parcours en largeur (BFS) depuis start_node. Complexité : O(V + E).
         Returns:
-            list: Liste des nœuds visités dans l'ordre de la visite BFS.
+            list: Nœuds visités dans l'ordre BFS.
         """
         start_node = int(start_node)
         visited = set()
@@ -66,7 +65,7 @@ class BFS:
         return result
 
     def parcourir_bfs_steps(self, start_node: int):
-        """BFS étape par étape : yield un dict par nœud visité (pour visualisation web)."""
+        """BFS étape par étape : yield un dict par nœud visité (pour visualisation web). Même complexité O(V+E)."""
         start_node = int(start_node)
         visited = set()
         queue = [start_node]
@@ -301,7 +300,7 @@ class BFS:
             results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "BFS")
             os.makedirs(results_dir, exist_ok=True)
             output_path = standardize_path(os.path.join(results_dir, file_name))
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+            plt.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
             print(f"[OK] Visualisation BFS sauvegardée dans: {output_path}")
             plt.close()
         return fig
@@ -538,7 +537,7 @@ class BFS:
             results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "BFS")
             os.makedirs(results_dir, exist_ok=True)
             output_path = standardize_path(os.path.join(results_dir, file_name))
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+            plt.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
             print(f"[OK] Visualisation arbre BFS sauvegardée dans: {output_path}")
             plt.close()
         return fig

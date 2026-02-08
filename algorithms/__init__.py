@@ -1,5 +1,8 @@
 """
-Algorithms package for Metro Network Graph project
+Package des algorithmes du projet Réseau Métro.
+
+Contient : graphe (génération, données), PCC (Dijkstra, Bellman-Ford, Floyd-Warshall),
+MST (Prim, Kruskal), parcours (BFS, DFS), et visualisation du réseau.
 """
 
 from . import graph_network, visualize_metro

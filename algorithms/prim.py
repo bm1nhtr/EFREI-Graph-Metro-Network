@@ -1,6 +1,10 @@
 """
-Algorithme de Prim - Arbre couvrant de poids minimum (MST)
+Algorithme de Prim - Arbre couvrant de poids minimum (MST).
+
 Sur le graphe non orienté du réseau métro (poids = temps de trajet).
+Implémentation avec liste d'arêtes candidates triée à chaque itération
+(sans tas de priorité) : complexité temporelle O(V × E log E).
+Avec tas binaire : O(E log V).
 """
 
 import os
@@ -8,11 +12,19 @@ import os
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from algorithms.utils import LAYOUT_METRO, LAYOUT_METRO_GUI, standardize_path
+from algorithms.utils import (
+    EXPORT_DPI,
+    LAYOUT_ARBRE,
+    LAYOUT_ARBRE_GUI,
+    LAYOUT_METRO,
+    LAYOUT_METRO_GUI,
+    SAVEFIG_PNG_OPTIONS,
+    standardize_path,
+)
 
 
 class Prim:
-    """Arbre couvrant de poids minimum (MST) par l'algorithme de Prim."""
+    """Arbre couvrant de poids minimum (MST) par l'algorithme de Prim (à partir d'une racine)."""
 
     def __init__(self, graph_data):
         """Initialise avec les données du graphe (tableau d'arêtes [u, v, poids])."""
@@ -20,6 +32,7 @@ class Prim:
 
     def get_edges_with_weights(self):
         """Retourne la liste des arêtes avec poids (chaque arête une seule fois pour graphe non orienté).
+        Complexité : O(E).
         Returns:
             list: [(u, v, weight), ...]
         """
@@ -34,12 +47,9 @@ class Prim:
         return edges
 
     def get_neighbors_with_weights(self, node: int):
-        """Retourne les voisins d'un nœud avec le poids de l'arête.
-        Args:
-            node (int): Nœud dont on veut les voisins.
-        Returns:
-            list: [(voisin, poids), ...]
-        """
+        """Retourne les voisins d'un nœud avec le poids de l'arête. Complexité : O(E)."""
+        # node (int): Nœud dont on veut les voisins.
+        # Returns: list [(voisin, poids), ...]
         node = int(node)
         result = []
         for edge in self.graph_data:
@@ -53,6 +63,10 @@ class Prim:
     def prim_mst(self, start_node: int):
         """
         Calcule un arbre couvrant de poids minimum (MST) par l'algorithme de Prim.
+
+        Complexité : O(V × E log E) (tri de la liste candidates à chaque itération).
+        Avec tas de priorité : O(E log V).
+
         Args:
             start_node (int): Nœud de départ (racine de l'arbre).
         Returns:
@@ -65,13 +79,13 @@ class Prim:
         mst_edges = []
         total_weight = 0.0
 
-        # Arêtes candidates: (poids, u, v) pour tri
+        # Arêtes candidates (frontière) : (poids, u, v) ; tri à chaque tour → O(E log E) par tour
         candidates = []
         for v, w in self.get_neighbors_with_weights(start_node):
             candidates.append((w, start_node, v))
 
         while candidates:
-            candidates.sort(key=lambda x: x[0])
+            candidates.sort(key=lambda x: x[0])  # O(|candidates| log |candidates|)
             w, u, v = candidates.pop(0)
             if v in in_mst:
                 continue
@@ -85,7 +99,7 @@ class Prim:
         return mst_edges, total_weight
 
     def prim_mst_steps(self, start_node: int):
-        """Prim étape par étape : yield à chaque arête ajoutée au MST (pour visualisation web)."""
+        """Prim étape par étape : yield à chaque arête ajoutée au MST (pour visualisation web). Même complexité que prim_mst."""
         start_node = int(start_node)
         in_mst = {start_node}
         mst_edges = []
@@ -270,7 +284,89 @@ class Prim:
             results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "PRIM")
             os.makedirs(results_dir, exist_ok=True)
             output_path = standardize_path(os.path.join(results_dir, file_name))
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+            plt.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
             print(f"[OK] Visualisation Prim sauvegardée dans: {output_path}")
+            plt.close()
+        return fig
+
+    def visualiser_arbre_mst(
+        self, mst_edges, total_weight, start_node, file_name="prim_tree_visualization.png", fig=None
+    ):
+        """Visualise uniquement l'arbre MST (Prim) en hiérarchie, racine = start_node. Si fig fourni (GUI), dessine dessus et ne sauvegarde pas."""
+        if not mst_edges:
+            return fig
+        G_tree = nx.Graph()
+        for u, v, w in mst_edges:
+            G_tree.add_edge(u, v, weight=w)
+        # Niveaux par BFS depuis la racine
+        levels = {start_node: 0}
+        queue = [start_node]
+        while queue:
+            node = queue.pop(0)
+            for neighbor in G_tree.neighbors(node):
+                if neighbor not in levels:
+                    levels[neighbor] = levels[node] + 1
+                    queue.append(neighbor)
+        max_level = max(levels.values())
+        nodes_by_level = {}
+        for n, lev in levels.items():
+            nodes_by_level.setdefault(lev, []).append(n)
+        pos = {}
+        for lev in range(max_level + 1):
+            nodes_in_level = nodes_by_level.get(lev, [])
+            y_pos = max_level - lev
+            for idx, n in enumerate(nodes_in_level):
+                x_pos = idx - (len(nodes_in_level) - 1) / 2
+                pos[n] = (x_pos, y_pos)
+
+        interactive = fig is not None
+        if not interactive:
+            fig, ax = plt.subplots(figsize=(14, 10))
+        else:
+            fig.clear()
+            ax = fig.add_subplot(111)
+
+        nx.draw_networkx_edges(
+            G_tree, pos, edge_color="blue", width=3, alpha=0.9, ax=ax
+        )
+        edge_labels = {(u, v): str(G_tree[u][v]["weight"]) for u, v in G_tree.edges()}
+        nx.draw_networkx_edge_labels(
+            G_tree, pos, edge_labels, font_size=10, ax=ax,
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.85),
+        )
+        nx.draw_networkx_nodes(
+            G_tree, pos, node_color="steelblue", node_size=600, alpha=0.9, ax=ax,
+            edgecolors="black", linewidths=2,
+        )
+        nx.draw_networkx_nodes(
+            G_tree, pos, nodelist=[start_node], node_color="red", node_size=800, alpha=1.0, ax=ax,
+            edgecolors="darkred", linewidths=4,
+        )
+        nx.draw_networkx_labels(G_tree, pos, {n: str(n) for n in G_tree.nodes()}, font_size=10, ax=ax)
+        ax.set_title(
+            f"Arbre MST (Prim) - Racine: Station {start_node}\nPoids total: {total_weight} min | {len(mst_edges)} arêtes",
+            fontsize=14, fontweight="bold", pad=20,
+        )
+        ax.axis("off")
+        from matplotlib.patches import Patch
+        ax.legend(
+            handles=[
+                Patch(facecolor="red", label=f"Racine ({start_node})"),
+                Patch(facecolor="steelblue", label="Stations du MST"),
+                Patch(facecolor="blue", edgecolor="blue", label="Arêtes du MST"),
+            ],
+            loc="upper right", fontsize=9,
+        )
+        if interactive:
+            fig.subplots_adjust(**LAYOUT_ARBRE_GUI)
+        else:
+            fig.subplots_adjust(**LAYOUT_ARBRE)
+            plt.tight_layout()
+        if not interactive:
+            results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "PRIM")
+            os.makedirs(results_dir, exist_ok=True)
+            output_path = standardize_path(os.path.join(results_dir, file_name))
+            plt.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
+            print(f"[OK] Arbre MST Prim sauvegardé dans: {output_path}")
             plt.close()
         return fig

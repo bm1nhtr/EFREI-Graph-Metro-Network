@@ -1,6 +1,8 @@
 """
 Visualisation du réseau métro (graphe non orienté).
-Dessine le graphe avec NetworkX/Matplotlib ; supporte le graphe normal et la variante Bellman (poids négatif).
+
+Dessine le graphe avec NetworkX/Matplotlib. Supporte le graphe normal
+et la variante Bellman (1 poids négatif pour démo cycle négatif).
 """
 
 import os
@@ -8,7 +10,13 @@ import os
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from algorithms.utils import LAYOUT_METRO, LAYOUT_METRO_GUI, load_graph_data
+from algorithms.utils import (
+    EXPORT_DPI,
+    LAYOUT_METRO,
+    LAYOUT_METRO_GUI,
+    load_graph_data,
+    SAVEFIG_PNG_OPTIONS,
+)
 
 
 def visualize_metro_network(
@@ -142,7 +150,7 @@ def visualize_metro_network(
         os.makedirs(results_dir, exist_ok=True)
         name = output_filename or "metro_network_visualization.png"
         output_path = os.path.join(results_dir, name)
-        plt.savefig(output_path, dpi=300, bbox_inches="tight")
+        plt.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
         print(f"[OK] Visualisation sauvegardée sous '{output_path}'")
         plt.close()
     return fig

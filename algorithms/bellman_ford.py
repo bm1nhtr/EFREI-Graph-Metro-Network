@@ -1,7 +1,9 @@
 """
-Algorithme de Bellman-Ford - Plus courts chemins depuis une source
-Fonctionne sur graphe avec poids (éventuellement négatifs).
-Sur le réseau métro : chaque arête non orientée est traitée comme deux arcs (u->v, v->u).
+Algorithme de Bellman-Ford - Plus courts chemins depuis une source.
+
+Graphe avec poids éventuellement négatifs ; détecte les cycles de poids négatif.
+Chaque arête non orientée est traitée comme deux arcs (u→v, v→u).
+Complexité : O(V × E). Espace : O(V).
 """
 
 import os
@@ -9,7 +11,13 @@ import os
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from algorithms.utils import LAYOUT_METRO, LAYOUT_METRO_GUI, standardize_path
+from algorithms.utils import (
+    EXPORT_DPI,
+    LAYOUT_METRO,
+    LAYOUT_METRO_GUI,
+    SAVEFIG_PNG_OPTIONS,
+    standardize_path,
+)
 
 
 class BellmanFord:
@@ -38,8 +46,8 @@ class BellmanFord:
 
     def bellman_ford(self, start_node: int):
         """
-        Calcule les plus courts chemins depuis start_node vers tous les nœuds (Bellman-Ford).
-        Stocke tous les prédécesseurs possibles par nœud (tous les PCC).
+        Calcule les plus courts chemins depuis start_node (Bellman-Ford).
+        Complexité : O(V × E). Détecte un cycle de poids négatif si présent.
         Returns:
             tuple: (distances, predecessors, has_negative_cycle)
                 - distances: dict {node: distance}
@@ -76,7 +84,7 @@ class BellmanFord:
         return distances, predecessors, has_negative_cycle
 
     def bellman_ford_steps(self, start_node: int):
-        """Bellman-Ford étape par étape : yield après chaque phase de relaxation (pour visualisation web)."""
+        """Bellman-Ford étape par étape : yield après chaque phase de relaxation (pour visualisation web). Même complexité O(V×E)."""
         start_node = int(start_node)
         nodes = self.get_nodes()
         edges = self.get_directed_edges()
@@ -390,7 +398,7 @@ class BellmanFord:
             results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "BELLMAN_FORD")
             os.makedirs(results_dir, exist_ok=True)
             output_path = standardize_path(os.path.join(results_dir, file_name))
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+            plt.savefig(output_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
             print(f"[OK] Visualisation Bellman-Ford sauvegardée dans: {output_path}")
             plt.close()
         return fig

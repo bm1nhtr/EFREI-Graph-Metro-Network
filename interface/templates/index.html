@@ -262,7 +262,9 @@
         <span class="algo-sep" aria-hidden="true"></span>
         <!-- MST -->
         <button type="button" data-algo="prim">Prim (MST)</button>
+        <button type="button" data-algo="prim_tree">Prim (MST) – Arbre</button>
         <button type="button" data-algo="kruskal">Kruskal (MST)</button>
+        <button type="button" data-algo="kruskal_tree">Kruskal (MST) – Arbre</button>
         <span class="algo-sep" aria-hidden="true"></span>
         <!-- BFS / DFS -->
         <button type="button" data-algo="bfs">BFS (parcours)</button>
@@ -341,6 +343,10 @@
         desc: 'L\'algorithme de Prim construit un arbre couvrant de poids minimum (MST) en ajoutant à chaque étape l\'arête de poids minimal qui relie un nœud déjà dans l\'arbre à un nœud hors de l\'arbre.',
         url: 'https://fr.wikipedia.org/wiki/Algorithme_de_Prim'
       },
+      prim_tree: {
+        desc: 'Vue en arbre du MST (Prim) : uniquement les arêtes du MST, disposées en hiérarchie avec la station de départ comme racine.',
+        url: 'https://fr.wikipedia.org/wiki/Algorithme_de_Prim'
+      },
       bellman_ford: {
         desc: 'Bellman-Ford calcule les plus courts chemins depuis une source vers tous les nœuds. Il gère les poids négatifs et détecte les cycles négatifs. Complexité O(n×m) avec n nœuds et m arêtes.',
         url: 'https://fr.wikipedia.org/wiki/Algorithme_de_Bellman-Ford'
@@ -359,6 +365,10 @@
       },
       kruskal: {
         desc: "L’algorithme de Kruskal construit un arbre couvrant de poids minimum (MST) en ajoutant les arêtes par poids croissant sans créer de cycle.",
+        url: "https://fr.wikipedia.org/wiki/Algorithme_de_Kruskal"
+      },
+      kruskal_tree: {
+        desc: "Vue en arbre du MST (Kruskal) : uniquement les arêtes du MST, disposées en hiérarchie. Kruskal n'a pas de racine algorithmique.",
         url: "https://fr.wikipedia.org/wiki/Algorithme_de_Kruskal"
       },
       floyd_warshall: {

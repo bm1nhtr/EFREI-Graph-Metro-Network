@@ -1,15 +1,15 @@
 """
 Floyd-Warshall - Plus courts chemins entre toutes les paires de nœuds.
 
-Calcule la matrice des distances minimales entre toutes les paires de stations
-et fournit une analyse (ex. station la plus "centrale").
+Matrice des distances minimales + analyse (ex. station la plus centrale).
+Complexité : O(V³). Espace : O(V²). Gère les poids négatifs (pas de cycle négatif).
 """
 
 import os
 
 import numpy as np
 
-from algorithms.utils import LAYOUT_FLOYD_GUI, standardize_path
+from algorithms.utils import EXPORT_DPI, LAYOUT_FLOYD_GUI, SAVEFIG_PNG_OPTIONS, standardize_path
 
 
 class FloydWarshall:
@@ -34,10 +34,9 @@ class FloydWarshall:
 
     def floyd_warshall(self) -> np.ndarray:
         """
-        Calcule les plus courts chemins entre toutes les paires de nœuds.
-
+        Plus courts chemins entre toutes les paires. Complexité : O(V³).
         Returns:
-            Matrice n x n : dist[i][j] = distance minimale de i à j (inf si pas de chemin).
+            Matrice n×n : dist[i][j] = distance minimale de i à j (inf si pas de chemin).
         """
         n = self.n
         inf = float("inf")
@@ -59,7 +58,7 @@ class FloydWarshall:
         return dist
 
     def floyd_warshall_steps(self):
-        """Floyd-Warshall étape par étape : yield la matrice après chaque k (pour visualisation web)."""
+        """Floyd-Warshall étape par étape : yield la matrice après chaque k (pour visualisation web). Même complexité O(V³)."""
         n = self.n
         inf = float("inf")
         dist = np.full((n, n), inf)
@@ -239,7 +238,7 @@ class FloydWarshall:
             results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "FLOYD_WARSHALL")
             os.makedirs(results_dir, exist_ok=True)
             out_path = standardize_path(os.path.join(results_dir, file_name))
-            plt.savefig(out_path, dpi=150, bbox_inches="tight")
+            plt.savefig(out_path, dpi=EXPORT_DPI, bbox_inches="tight", **SAVEFIG_PNG_OPTIONS)
             plt.close()
             print(f"[OK] Visualisation Floyd-Warshall sauvegardée dans: {out_path}")
         return fig

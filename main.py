@@ -3,7 +3,8 @@
 Projet Graph - Réseau Métro.
 
 Point d'entrée principal : menu console pour lancer les algorithmes
-et les visualisations.
+(BFS, DFS, Prim, Kruskal, Dijkstra, Bellman-Ford, Floyd-Warshall)
+et les visualisations. Les résultats et images sont sauvegardés dans results/.
 """
 
 import os
@@ -46,7 +47,7 @@ def _format_distance(d: float) -> str:
 
 
 def _run_bfs(graph_data, start_node: int) -> None:
-    """Lance BFS, sauvegarde résultats et visualisations dans results/BFS/."""
+    """Lance BFS (parcours en largeur), sauvegarde résultats et visualisations dans results/BFS/."""
     print("Execution de l'algorithme BFS sur le reseau metro...")
     bfs = BFS(graph_data)
     parcours = bfs.parcourir_bfs(start_node=start_node)
@@ -62,7 +63,7 @@ def _run_bfs(graph_data, start_node: int) -> None:
 
 
 def _run_dfs(graph_data, start_node: int) -> None:
-    """Lance DFS, sauvegarde résultats et visualisations dans results/DFS/."""
+    """Lance DFS (parcours en profondeur), sauvegarde résultats et visualisations dans results/DFS/."""
     print("Execution de l'algorithme DFS sur le reseau metro...")
     dfs = DFS(graph_data)
     parcours, parent = dfs.parcourir_dfs(start_node=start_node)
@@ -80,7 +81,7 @@ def _run_dfs(graph_data, start_node: int) -> None:
 
 
 def _run_prim(graph_data, start_node: int) -> None:
-    """Lance Prim (MST), sauvegarde résultats dans results/PRIM/."""
+    """Lance Prim (MST - arbre couvrant minimum), sauvegarde résultats et visuels dans results/PRIM/."""
     print("Execution de l'algorithme de Prim (MST) sur le reseau metro...")
     prim = Prim(graph_data)
     mst_edges, total_weight = prim.prim_mst(start_node=start_node)
@@ -89,11 +90,14 @@ def _run_prim(graph_data, start_node: int) -> None:
     prim.visualiser_mst(
         mst_edges, total_weight, start_node=start_node, file_name="prim_visualization.png"
     )
-    print("Resultats et visualisation Prim sauvegardes dans results/PRIM/")
+    prim.visualiser_arbre_mst(
+        mst_edges, total_weight, start_node=start_node, file_name="prim_tree_visualization.png"
+    )
+    print("Resultats et visualisations Prim sauvegardes dans results/PRIM/")
 
 
 def _run_kruskal(graph_data, start_node: int) -> None:
-    """Lance Kruskal (MST), sauvegarde résultats dans results/KRUSKAL/."""
+    """Lance Kruskal (MST - arbre couvrant minimum), sauvegarde résultats et visuels dans results/KRUSKAL/."""
     print("Execution de l'algorithme de Kruskal (MST) sur le reseau metro...")
     kr = Kruskal(graph_data)
     mst_edges, total_weight = kr.kruskal_mst(start_node=start_node)
@@ -102,11 +106,14 @@ def _run_kruskal(graph_data, start_node: int) -> None:
     kr.visualiser_mst(
         mst_edges, total_weight, start_node=start_node, file_name="kruskal_visualization.png"
     )
-    print("Resultats et visualisation Kruskal sauvegardes dans results/KRUSKAL/")
+    kr.visualiser_arbre_mst(
+        mst_edges, total_weight, start_node=start_node, file_name="kruskal_tree_visualization.png"
+    )
+    print("Resultats et visualisations Kruskal sauvegardes dans results/KRUSKAL/")
 
 
 def _run_bellman_ford(graph_data, start_node: int) -> None:
-    """Lance Bellman-Ford sur le graphe à poids négatif, sauvegarde dans results/BELLMAN_FORD/."""
+    """Lance Bellman-Ford (PCC avec détection cycle négatif), graphe option A, sauvegarde dans results/BELLMAN_FORD/."""
     try:
         graph_data = load_graph_data("metro_network_bellman.npy")
     except FileNotFoundError:
@@ -133,7 +140,7 @@ def _run_bellman_ford(graph_data, start_node: int) -> None:
 
 
 def _run_dijkstra(graph_data, start_node: int) -> None:
-    """Lance Dijkstra (PCC), sauvegarde résultats dans results/DIJKSTRA/."""
+    """Lance Dijkstra (plus courts chemins depuis une source), sauvegarde résultats dans results/DIJKSTRA/."""
     print("Execution de l'algorithme de Dijkstra sur le reseau metro...")
     dj = Dijkstra(graph_data)
     distances, predecessors = dj.dijkstra(start_node=start_node)
@@ -148,7 +155,7 @@ def _run_dijkstra(graph_data, start_node: int) -> None:
 
 
 def _run_floyd_warshall(graph_data) -> None:
-    """Lance Floyd-Warshall (toutes paires + analyse), sauvegarde dans results/FLOYD_WARSHALL/."""
+    """Lance Floyd-Warshall (plus courts chemins toutes paires + centralité), sauvegarde dans results/FLOYD_WARSHALL/."""
     print("Execution de l'algorithme de Floyd-Warshall (toutes les paires)...")
     fw = FloydWarshall(graph_data)
     dist = fw.floyd_warshall()
@@ -166,10 +173,24 @@ def _run_gui() -> None:
 
 
 def main() -> None:
-    """Boucle principale : affiche le menu et exécute l'option choisie jusqu'à Quitter (0)."""
+    """Boucle principale : demande la station de départ, affiche le menu et exécute l'option jusqu'à Quitter (0)."""
     start_node = DEFAULT_START_NODE
+    # Station de départ : utilisée par Bellman-Ford, Dijkstra, Prim, BFS, DFS (Kruskal n'en a pas besoin)
+    raw = input(
+        "Station de depart pour options 3, 4, 5, 7 et 8 (0-18). Entree = 10 (defaut) : "
+    ).strip()
+    if raw != "":
+        try:
+            n = int(raw)
+            if 0 <= n <= 18:
+                start_node = n
+            else:
+                print("Valeur invalide : defaut 10 utilise.")
+        except ValueError:
+            print("Valeur invalide : defaut 10 utilise.")
+
     while True:
-        print("=" * 70)
+        print("\n" + "=" * 70)
         print("PROJET GRAPH - RESEAU METRO")
         print("=" * 70)
         print("\nChoisissez une option :")
@@ -218,7 +239,6 @@ def main() -> None:
         if choice == "2":
             print("\nVisualisation du reseau metro...")
             visualize_metro.visualize_metro_network()
-            print("Visualisation sauvegardee dans results/metro_network_visualization.png")
             try:
                 load_graph_data("metro_network_bellman.npy")
                 visualize_metro.visualize_metro_network(

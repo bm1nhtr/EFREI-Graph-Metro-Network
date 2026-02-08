@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-Projet Graph - Réseau Métro - Interface graphique desktop (Tkinter)
-Affichage dynamique du graphe, menu algorithmes, visualisation en couleur.
-Lancer depuis la racine du projet : python interface/gui.py
+Projet Graph - Réseau Métro - Interface graphique desktop (Tkinter).
+
+Affiche le graphe métro et permet de lancer les algorithmes (PCC, MST, BFS, DFS)
+avec choix de la station de départ. Résultats dessinés sur une figure Matplotlib.
+Lancer depuis la racine : python interface/gui.py
 """
 
 import os
@@ -37,6 +39,7 @@ class MetroGraphApp:
     """Application desktop Tkinter : graphe métro + menu algorithmes (PCC, MST, BFS, DFS)."""
 
     def __init__(self):
+        """Charge les données graphe (metro + option Bellman), crée la fenêtre et le menu."""
         self.root = tk.Tk()
         self.root.title("Projet Graph - Réseau Métro (19 stations)")
         self.root.minsize(900, 700)
@@ -62,6 +65,7 @@ class MetroGraphApp:
         self._build_ui()
 
     def _build_ui(self):
+        """Construit le panneau gauche (menu, station de départ) et la zone Matplotlib à droite."""
         # Panneau gauche : menu
         left = ttk.Frame(self.root, padding=10)
         left.pack(side=tk.LEFT, fill=tk.Y)
@@ -97,7 +101,9 @@ class MetroGraphApp:
             anchor=tk.W, pady=(8, 2)
         )
         ttk.Button(left, text="Prim (MST)", command=self.show_prim).pack(fill=tk.X, pady=2)
+        ttk.Button(left, text="Prim (MST) - Arbre", command=self.show_prim_tree).pack(fill=tk.X, pady=2)
         ttk.Button(left, text="Kruskal (MST)", command=self.show_kruskal).pack(fill=tk.X, pady=2)
+        ttk.Button(left, text="Kruskal (MST) - Arbre", command=self.show_kruskal_tree).pack(fill=tk.X, pady=2)
         ttk.Label(left, text="Parcours (BFS / DFS):", font=("", 10, "bold")).pack(
             anchor=tk.W, pady=(8, 2)
         )
@@ -190,6 +196,14 @@ class MetroGraphApp:
         prim.visualiser_mst(mst_edges, total_weight, start_node=start, fig=self.fig)
         self.canvas.draw()
 
+    def show_prim_tree(self):
+        """Affiche l'arbre MST (Prim) en hiérarchie."""
+        start = self._get_start_node()
+        prim = Prim(self.graph_data)
+        mst_edges, total_weight = prim.prim_mst(start_node=start)
+        prim.visualiser_arbre_mst(mst_edges, total_weight, start_node=start, fig=self.fig)
+        self.canvas.draw()
+
     def show_bellman_ford(self):
         start = self._get_start_node()
         data = self.graph_data_bellman if self.graph_data_bellman is not None else self.graph_data
@@ -215,6 +229,14 @@ class MetroGraphApp:
         kr = Kruskal(self.graph_data)
         mst_edges, total_weight = kr.kruskal_mst(start_node=start)
         kr.visualiser_mst(mst_edges, total_weight, start_node=start, fig=self.fig)
+        self.canvas.draw()
+
+    def show_kruskal_tree(self):
+        """Affiche l'arbre MST (Kruskal) en hiérarchie (sans racine algorithmique)."""
+        start = self._get_start_node()
+        kr = Kruskal(self.graph_data)
+        mst_edges, total_weight = kr.kruskal_mst(start_node=start)
+        kr.visualiser_arbre_mst(mst_edges, total_weight, start_node=start, fig=self.fig)
         self.canvas.draw()
 
     def show_floyd_warshall(self):

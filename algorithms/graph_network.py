@@ -60,7 +60,7 @@ METRO_NETWORK_BELLMAN = METRO_NETWORK_BELLMAN.astype(np.int64)
 
 
 def save_metro_network() -> None:
-    """Sauvegarde le graphe en .npy, .txt, .csv et .json dans data/."""
+    """Sauvegarde le graphe métro en .npy, .txt, .csv, .json et variante Bellman dans data/."""
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
     os.makedirs(data_dir, exist_ok=True)
 

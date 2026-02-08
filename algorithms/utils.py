@@ -1,16 +1,26 @@
+"""
+Utilitaires partagés par les algorithmes et visualisations.
+
+Constantes de layout (Matplotlib) et fonctions de chargement/chemins.
+"""
 import os
 
 import numpy as np
 
-# Layout par défaut pour les visuels type "réseau métro" (export image)
+# --- Layout Matplotlib (marges, position légende) ---
+# Réseau métro : export image
 LAYOUT_METRO = dict(left=0.062, bottom=0, right=0.948, top=0.886, wspace=0.217, hspace=0.217)
-# En mode GUI : right bien réduit pour que la légende ne soit pas coupée (marge droite pour le texte)
+# Réseau métro en GUI : marge droite pour légende
 LAYOUT_METRO_GUI = dict(left=0.062, bottom=0, right=0.70, top=0.886, wspace=0.217, hspace=0.217)
-# Layout pour l'arbre BFS (format vertical)
+# Arbres (BFS, DFS, MST) : format vertical
 LAYOUT_ARBRE = dict(left=0.036, bottom=0.05, right=0.676, top=0.829, wspace=0.217, hspace=0.217)
 LAYOUT_ARBRE_GUI = dict(left=0.036, bottom=0.05, right=0.676, top=0.829, wspace=0.217, hspace=0.217)
-# Layout pour Floyd-Warshall (matrice) en mode GUI
+# Floyd-Warshall : matrice en GUI
 LAYOUT_FLOYD_GUI = dict(left=0.062, bottom=0.107, right=0.7, top=0.886, wspace=0.217, hspace=0.217)
+
+# Export images : DPI réduit pour alléger les PNG (rapport LaTeX)
+EXPORT_DPI = 100
+SAVEFIG_PNG_OPTIONS = {"pil_kwargs": {"compress_level": 6}}
 
 
 def standardize_path(path):
@@ -27,13 +37,13 @@ def standardize_path(path):
 
 
 def load_graph_data(file_name):
-    """Charger les données du graphe depuis un fichier numpy
+    """Charger les données du graphe depuis data/<file_name> (format numpy, tableau N×3 : u, v, poids).
 
     Args:
-        file_name (str): Nom du fichier numpy contenant les données du graphe.
+        file_name (str): Nom du fichier (ex. metro_network.npy).
 
     Returns:
-        np.ndarray: Données du graphe chargées.
+        np.ndarray: Données du graphe (arêtes avec poids).
     """
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
     graph_data = np.load(standardize_path(os.path.join(data_dir, file_name)))
